@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: dada_mani_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: dada_mani_erp
+    networks:
+      - dada_mani_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dada_mani_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      API_PREFIX: /api/v1
+      MONGODB_URI: mongodb://mongodb:27017/dada_mani_erp
+      JWT_ACCESS_SECRET: dada_mani_enterprise_access_secret_super_secure_key_2026
+      JWT_REFRESH_SECRET: dada_mani_enterprise_refresh_secret_super_secure_key_2026
+      JWT_ACCESS_EXPIRY: 1d
+      JWT_REFRESH_EXPIRY: 7d
+      SMTP_HOST: smtp.ethereal.email
+      SMTP_PORT: 587
+      SMTP_USER: dada.mani.erp@example.com
+      SMTP_PASS: secret_pass_ethereal
+      SMTP_FROM: Dada Mani ERP <no-reply@dadamani.com>
+      CORS_ORIGIN: http://localhost,http://localhost:80,http://localhost:5173
+    depends_on:
+      - mongodb
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    networks:
+      - dada_mani_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dada_mani_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - dada_mani_network
+
+networks:
+  dada_mani_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  backend_uploads:
+  backend_logs:

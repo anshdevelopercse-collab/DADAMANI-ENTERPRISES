@@ -1,0 +1,161 @@
+{
+  "info": {
+    "_postman_id": "dada-mani-erp-2026",
+    "name": "Dada Mani Enterprise Operations Management System API",
+    "description": "Comprehensive REST API collection for Dada Mani ERP covering Authentication (OTP & JWT), Tenders, Awarded Tenders, Fleet Vehicles, Work Orders, Excel Import/Export, and Audit Logging.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api/v1" },
+    { "key": "accessToken", "value": "" },
+    { "key": "adminEmail", "value": "admin@dadamani.com" },
+    { "key": "managerEmail", "value": "manager@dadamani.com" }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Admin Login (Triggers OTP)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@dadamani.com\",\n  \"password\": \"Admin@123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Verify Admin OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@dadamani.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/verify-otp", "host": ["{{baseUrl}}"], "path": ["auth", "verify-otp"] }
+          }
+        },
+        {
+          "name": "Manager Direct Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"manager@dadamani.com\",\n  \"password\": \"Manager@123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Get Current Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Dashboard & Telemetry",
+      "item": [
+        {
+          "name": "Get Dashboard Metrics & Charts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/metrics", "host": ["{{baseUrl}}"], "path": ["dashboard", "metrics"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Tender Management",
+      "item": [
+        {
+          "name": "List Tenders (Paginated & Filtered)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/tenders?page=1&limit=10&status=Submitted", "host": ["{{baseUrl}}"], "path": ["tenders"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }, { "key": "status", "value": "Submitted" }] }
+          }
+        },
+        {
+          "name": "Create Tender Proposal",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenderNumber\": \"MCL/LOG-2026/901\",\n  \"title\": \"Internal Haulage of 1.2 MT Coal from Pit 4\",\n  \"clientName\": \"Mahanadi Coalfields Limited\",\n  \"category\": \"Logistics\",\n  \"estimatedValue\": 180000000,\n  \"earnestMoneyDeposit\": 3600000,\n  \"submissionDeadline\": \"2026-10-30T00:00:00.000Z\",\n  \"location\": \"Talcher Coalfields, Odisha\",\n  \"status\": \"Draft\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/tenders", "host": ["{{baseUrl}}"], "path": ["tenders"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Vehicle & Fleet Management",
+      "item": [
+        {
+          "name": "List Fleet Assets",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/vehicles?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["vehicles"] }
+          }
+        },
+        {
+          "name": "Get Compliance Expiry Alerts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/vehicles/compliance/alerts?days=30", "host": ["{{baseUrl}}"], "path": ["vehicles", "compliance", "alerts"], "query": [{ "key": "days", "value": "30" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Work Orders",
+      "item": [
+        {
+          "name": "List Work Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/work-orders?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["work-orders"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Universal Exports",
+      "item": [
+        {
+          "name": "Export Tenders (Excel)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/import-export/export?module=tenders&format=excel", "host": ["{{baseUrl}}"], "path": ["import-export", "export"], "query": [{ "key": "module", "value": "tenders" }, { "key": "format", "value": "excel" }] }
+          }
+        },
+        {
+          "name": "Export Vehicles (PDF Landscape)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/import-export/export?module=vehicles&format=pdf", "host": ["{{baseUrl}}"], "path": ["import-export", "export"], "query": [{ "key": "module", "value": "vehicles" }, { "key": "format", "value": "pdf" }] }
+          }
+        }
+      ]
+    }
+  ]
+}

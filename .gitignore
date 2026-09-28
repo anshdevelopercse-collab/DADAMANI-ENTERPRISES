@@ -1,0 +1,36 @@
+# Node modules
+node_modules/
+*/node_modules/
+
+# Build output
+dist/
+build/
+*/dist/
+*/build/
+
+# Environment files — NEVER commit credentials
+.env
+.env.*
+!.env.example
+*/.env
+*/.env.*
+!*/.env.example
+
+# Uploads (local file storage, not source)
+uploads/
+*/uploads/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# TypeScript build info
+*.tsbuildinfo
