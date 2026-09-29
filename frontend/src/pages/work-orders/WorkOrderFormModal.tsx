@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { api } from '../../services/api';
 import { WorkOrder } from '../../types';
+import { useFirm } from '../../contexts/FirmContext';
+import { FirmSelect } from '../../components/firm/FirmSelect';
+
+const firmIdOf = (f: any): string => (!f ? '' : typeof f === 'string' ? f : f._id);
 
 interface WorkOrderFormModalProps {
   isOpen: boolean;
@@ -16,6 +20,8 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
   onSuccess,
   orderToEdit,
 }) => {
+  const { defaultFirmId } = useFirm();
+  const [firm, setFirm] = useState('');
   const [managers, setManagers] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [tenders, setTenders] = useState<any[]>([]);
@@ -41,6 +47,7 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
 
   useEffect(() => {
     fetchPrerequisites();
+    setFirm(orderToEdit ? firmIdOf(orderToEdit.firm) : defaultFirmId);
     if (orderToEdit) {
       setFormData({
         orderNumber: orderToEdit.orderNumber,
@@ -63,14 +70,14 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
 
   const fetchPrerequisites = async () => {
     try {
-      const [mgrRes, vehRes, tndRes] = await Promise.all([
-        api.get('/users?role=Manager'),
-        api.get('/vehicles?limit=50'),
-        api.get('/tenders?limit=50'),
+      const results = await Promise.allSettled([
+        api.get('/users', { params: { role: 'Manager' } }),
+        api.get('/vehicles', { params: { limit: 50 }, headers: { 'X-Firm-Scope': 'all' } }),
+        api.get('/tenders', { params: { limit: 50 }, headers: { 'X-Firm-Scope': 'all' } }),
       ]);
-      setManagers(mgrRes.data?.data || []);
-      setVehicles(vehRes.data?.data || []);
-      setTenders(tndRes.data?.data || []);
+      if (results[0].status === 'fulfilled') setManagers(results[0].value.data?.data || []);
+      if (results[1].status === 'fulfilled') setVehicles(results[1].value.data?.data || []);
+      if (results[2].status === 'fulfilled') setTenders(results[2].value.data?.data || []);
     } catch (e) {
       console.error(e);
     }
@@ -81,14 +88,19 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!orderToEdit && !firm) {
+      setError('Select the firm this contract belongs to');
+      return;
+    }
     setLoading(true);
 
     try {
-      const payload = {
+      const payload: any = {
         ...formData,
         contractValue: Number(formData.contractValue),
         relatedTender: formData.relatedTender || undefined,
       };
+      if (firm) payload.firm = firm;
 
       if (orderToEdit) {
         await api.put(`/work-orders/${orderToEdit._id}`, payload);
@@ -128,6 +140,15 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <FirmSelect
+            id="wo-firm"
+            label="Contract firm"
+            value={firm}
+            onChange={(next) => { setFirm(next); setFormData((f) => ({ ...f, relatedTender: '' })); }}
+            hint={orderToEdit && !firmIdOf(orderToEdit.firm)
+              ? 'This contract predates firm tracking. Selecting a firm assigns it — and its existing invoices, advances and GEM fees — permanently.'
+              : undefined}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">

@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../interfaces/common.interface.js';
 import { ApiResponse } from '../utils/api-response.util.js';
@@ -57,7 +59,22 @@ export class ImportExportController {
         return;
       }
 
-      const { sheetName, module, headerMapping, skipDuplicates, allowPartial } = req.body;
+      const { sheetName, module, headerMapping, skipDuplicates, allowPartial, firmId } = req.body;
+
+      // Firm authorization: validate firmId against resolved firmScope
+      // A Restricted user can only import into firms they are authorized for
+      if (firmId && req.firmScope) {
+        const { firmScope } = req;
+        if (firmScope.kind === 'firm' && firmScope.firmId !== firmId) {
+          ApiResponse.error(res, 'You are not authorized to import into this firm', 'AUTH_003', 403);
+          return;
+        }
+        if (firmScope.kind === 'all' && firmScope.allowedFirmIds?.length && !firmScope.allowedFirmIds.includes(firmId)) {
+          ApiResponse.error(res, 'You are not authorized to import into this firm', 'AUTH_003', 403);
+          return;
+        }
+      }
+
       const parsedMapping = typeof headerMapping === 'string' ? JSON.parse(headerMapping) : headerMapping;
 
       const result = await importExportService.executeImport(
@@ -70,7 +87,8 @@ export class ImportExportController {
           skipDuplicates: skipDuplicates === 'true' || skipDuplicates === true,
           allowPartial: allowPartial === 'true' || allowPartial === true,
         },
-        req.user?._id.toString()!
+        req.user?._id.toString()!,
+        firmId || undefined
       );
 
       await logAudit(
@@ -92,7 +110,8 @@ export class ImportExportController {
       const exportResult = await importExportService.generateExport(
         module as any,
         format as any,
-        req.query
+        req.query,
+        req.firmScope
       );
 
       await logAudit(req, 'EXPORT', AuditAction.EXPORT, `Exported ${module} data in ${format} format`);
@@ -131,7 +150,7 @@ export class ImportExportController {
 export class DocumentController {
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await documentService.getDocuments(req.query as any);
+      const result = await documentService.getDocuments(req.query as any, req.firmScope);
       ApiResponse.success(res, 'Documents retrieved', result.data, result.pagination);
     } catch (error) {
       next(error);
@@ -145,7 +164,28 @@ export class DocumentController {
         return;
       }
 
-      const { title, folder, category, entityType, entityId, tags } = req.body;
+      const { title, folder, category, entityType, entityId, tags, firms } = req.body;
+
+      // Validate firms[] — only allow firms the caller is authorized for
+      let resolvedFirms: string[] = [];
+      if (firms) {
+        resolvedFirms = Array.isArray(firms) ? firms : [firms];
+        // Check each supplied firmId against firmScope
+        if (req.firmScope) {
+          const { firmScope } = req;
+          for (const fid of resolvedFirms) {
+            if (firmScope.kind === 'firm' && firmScope.firmId !== fid) {
+              ApiResponse.error(res, `Not authorized to tag document with firm ${fid}`, 'AUTH_003', 403);
+              return;
+            }
+            if (firmScope.kind === 'all' && firmScope.allowedFirmIds?.length && !firmScope.allowedFirmIds.includes(fid)) {
+              ApiResponse.error(res, `Not authorized to tag document with firm ${fid}`, 'AUTH_003', 403);
+              return;
+            }
+          }
+        }
+      }
+
       const doc = await documentService.createDocument(
         {
           title: title || req.file.originalname,
@@ -158,7 +198,10 @@ export class DocumentController {
           mimeType: req.file.mimetype,
           entityType,
           entityId,
+          firms: resolvedFirms,
           tags: tags ? (Array.isArray(tags) ? tags : tags.split(',')) : [],
+          versionNumber: 1,
+          isLatestVersion: true,
         },
         req.user?._id.toString()!,
         req.user?.name!
@@ -173,7 +216,7 @@ export class DocumentController {
 
   static async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      await documentService.deleteDocument(getId(req.params.id));
+      await documentService.deleteDocument(getId(req.params.id), req.firmScope);
       await logAudit(req, 'DOCUMENTS', AuditAction.DELETE, `Deleted document ID ${getId(req.params.id)}`);
       ApiResponse.success(res, 'Document deleted');
     } catch (error) {
@@ -183,7 +226,7 @@ export class DocumentController {
 
   static async getVersionHistory(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const versions = await documentService.getVersionHistory(getId(req.params.id));
+      const versions = await documentService.getVersionHistory(getId(req.params.id), req.firmScope);
       ApiResponse.success(res, 'Document version history retrieved', versions);
     } catch (error) {
       next(error);
@@ -209,10 +252,27 @@ export class DocumentController {
           notes,
         },
         req.user?._id.toString()!,
-        req.user?.name!
+        req.user?.name!,
+        req.firmScope
       );
       await logAudit(req, 'DOCUMENTS', AuditAction.UPDATE, `Replaced document ${req.params.id} → v${newDoc.versionNumber}`);
       ApiResponse.created(res, 'New document version uploaded', newDoc);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async download(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const doc = await documentService.getDocumentById(getId(req.params.id), req.firmScope);
+      const filePath = (doc as any).filePath as string;
+      if (!filePath || !fs.existsSync(filePath)) {
+        ApiResponse.error(res, 'Document file not found on server', 'RES_001', 404);
+        return;
+      }
+      res.setHeader('Content-Type', (doc as any).mimeType || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filePath)}"`);
+      fs.createReadStream(filePath).pipe(res);
     } catch (error) {
       next(error);
     }

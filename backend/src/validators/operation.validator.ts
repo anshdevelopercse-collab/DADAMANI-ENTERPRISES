@@ -16,6 +16,7 @@ export const TenderCreateSchema = z.object({
   state: z.string().optional(),
   scopeOfWork: z.string().optional(),
   assignedManager: z.string().optional(),
+  entity: z.string().optional(),
 });
 
 export const AwardedTenderCreateSchema = z.object({

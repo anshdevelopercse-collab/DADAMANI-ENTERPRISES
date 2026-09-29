@@ -30,8 +30,11 @@ import { api } from '../../services/api';
 import { StatCard } from '../../components/common/StatCard';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { Link } from 'react-router-dom';
+import { useFirm } from '../../contexts/FirmContext';
+import { FirmTotals } from '../../components/firm/FirmTotals';
 
 export const DashboardPage: React.FC = () => {
+  const { firms } = useFirm();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -70,7 +73,7 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
-  const { cards, charts, recentActivity, upcomingExpiries } = data;
+  const { cards, charts, recentActivity, upcomingExpiries, financialByFirm } = data;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -263,6 +266,30 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Per-Firm Financial Breakdown — only shown when portal manages 2+ firms */}
+      {firms.length >= 2 && financialByFirm && financialByFirm.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <FirmTotals
+            title="Revenue by Firm"
+            currency="₹"
+            rows={financialByFirm.map((f: any) => ({ firm: { _id: f.firmId, name: f.firmName, code: f.firmCode }, total: f.revenue }))}
+            combined={cards.totalRevenue}
+          />
+          <FirmTotals
+            title="Invoiced by Firm"
+            currency="₹"
+            rows={financialByFirm.map((f: any) => ({ firm: { _id: f.firmId, name: f.firmName, code: f.firmCode }, total: f.invoiced ?? f.invoices }))}
+            combined={financialByFirm.reduce((s: number, f: any) => s + (f.invoiced ?? f.invoices ?? 0), 0)}
+          />
+          <FirmTotals
+            title="Advances by Firm"
+            currency="₹"
+            rows={financialByFirm.map((f: any) => ({ firm: { _id: f.firmId, name: f.firmName, code: f.firmCode }, total: f.advances }))}
+            combined={financialByFirm.reduce((s: number, f: any) => s + (f.advances || 0), 0)}
+          />
+        </div>
+      )}
 
       {/* Bottom Row: Recent Audit Activity & Upcoming Fleet Expiries */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

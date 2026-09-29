@@ -16,6 +16,7 @@ import { Tender } from '../../types';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable, Column } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { FirmBadge } from '../../components/firm/FirmBadge';
 import { TenderFormModal } from './TenderFormModal';
 
 export const TenderListPage: React.FC = () => {
@@ -90,6 +91,7 @@ export const TenderListPage: React.FC = () => {
   };
 
   const columns: Column<Tender>[] = [
+    { header: 'Firm', cell: (row) => <FirmBadge firm={row.firm} /> },
     {
       header: 'Tender Info',
       cell: (row) => (

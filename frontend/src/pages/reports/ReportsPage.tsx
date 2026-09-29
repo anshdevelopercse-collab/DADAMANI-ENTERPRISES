@@ -30,6 +30,8 @@ import {
 } from 'recharts';
 import { api } from '../../services/api';
 import { PageHeader } from '../../components/common/PageHeader';
+import { useFirm } from '../../contexts/FirmContext';
+import { FirmTotals } from '../../components/firm/FirmTotals';
 
 const COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'];
 
@@ -84,6 +86,7 @@ const reportSections = [
 ];
 
 export const ReportsPage: React.FC = () => {
+  const { firms } = useFirm();
   const [data, setData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('all');
@@ -238,6 +241,39 @@ export const ReportsPage: React.FC = () => {
               <div className="text-slate-400 text-sm mt-1">{label}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Per-Firm Financial Breakdown */}
+      {showFinancial && firms.length >= 2 && (data as any)?.financialByFirm?.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FirmTotals
+            title="Awarded Revenue by Firm"
+            currency="₹"
+            rows={((data as any).financialByFirm).map((f: any) => ({
+              firm: { _id: f.firmId, name: f.firmName, code: f.firmCode },
+              total: f.revenue || 0,
+            }))}
+            combined={financial?.totalAwardedValue}
+          />
+          <FirmTotals
+            title="Work Order Budget by Firm"
+            currency="₹"
+            rows={((data as any).financialByFirm).map((f: any) => ({
+              firm: { _id: f.firmId, name: f.firmName, code: f.firmCode },
+              total: f.workOrderBudget || 0,
+            }))}
+            combined={financial?.totalWorkOrderBudget}
+          />
+          <FirmTotals
+            title="Actual Cost by Firm"
+            currency="₹"
+            rows={((data as any).financialByFirm).map((f: any) => ({
+              firm: { _id: f.firmId, name: f.firmName, code: f.firmCode },
+              total: f.actualCost || 0,
+            }))}
+            combined={financial?.totalActualCost}
+          />
         </div>
       )}
 

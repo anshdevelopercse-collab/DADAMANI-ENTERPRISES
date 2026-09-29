@@ -3,6 +3,13 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_ACCESS_SECRET) {
+  throw new Error('JWT_ACCESS_SECRET must be set via environment variable in production');
+}
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_REFRESH_SECRET) {
+  throw new Error('JWT_REFRESH_SECRET must be set via environment variable in production');
+}
+
 export const ENV = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT || '5000', 10),

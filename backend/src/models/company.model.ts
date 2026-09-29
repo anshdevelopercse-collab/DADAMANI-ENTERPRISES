@@ -12,6 +12,7 @@ export interface ICompanyDocument extends mongoose.Document {
   city: string;
   state: string;
   isActive: boolean;
+  isPrimary: boolean;
 }
 
 const CompanySchema = new Schema<ICompanyDocument>(
@@ -27,6 +28,7 @@ const CompanySchema = new Schema<ICompanyDocument>(
     city: { type: String, required: true },
     state: { type: String, required: true },
     isActive: { type: Boolean, default: true },
+    isPrimary: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

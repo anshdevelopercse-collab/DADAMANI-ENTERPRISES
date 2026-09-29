@@ -85,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
     {
       label: 'Administration',
       items: [
-        { name: 'Legal Entities', href: '/companies', icon: Building2, permission: 'company:read' },
+        { name: 'Firms', href: '/companies', icon: Building2, permission: 'company:read' },
         { name: 'Audit Trail', href: '/audit-logs', icon: History, permission: 'audit:read' },
         { name: 'User Management', href: '/users', icon: Users, permission: 'user:read' },
         { name: 'System Settings', href: '/settings', icon: Settings, permission: 'settings:manage' },

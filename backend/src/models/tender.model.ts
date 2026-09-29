@@ -39,6 +39,7 @@ const TenderSchema = new Schema<ITenderDocument>(
     tenderNumber: { type: String, required: true, unique: true, uppercase: true, trim: true, index: true },
     title: { type: String, required: true, trim: true, index: true },
     clientName: { type: String, required: true, trim: true, index: true },
+    entity: { type: Schema.Types.ObjectId, ref: 'Company', index: true },
     clientDepartment: { type: String, trim: true },
     category: {
       type: String,

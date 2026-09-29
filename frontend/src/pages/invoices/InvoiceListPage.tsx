@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { Drawer } from '../../components/common/Drawer';
 import { InvoiceFormModal } from './InvoiceFormModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { FirmBadge } from '../../components/firm/FirmBadge';
 
 const formatCurrency = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
@@ -75,6 +76,7 @@ export const InvoiceListPage: React.FC = () => {
 
   const columns: Column<Invoice>[] = [
     { header: 'Invoice #', cell: (i) => <span className="font-mono text-slate-200">{i.invoiceNumber}</span> },
+    { header: 'Firm', cell: (i) => <FirmBadge firm={(i as any).firm} /> },
     {
       header: 'Contract',
       cell: (i) => {

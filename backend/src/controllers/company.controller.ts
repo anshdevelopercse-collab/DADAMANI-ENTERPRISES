@@ -8,6 +8,18 @@ import { AuditAction } from '../constants/status.constant.js';
 const getId = (id: any): string => (Array.isArray(id) ? id[0] : String(id));
 
 export class CompanyController {
+  /** Returns the active firms list + the primary firm ID for firm-switcher initialisation. */
+  static async context(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const firms = await Company.find({ isActive: true })
+        .select('_id name code isPrimary')
+        .sort({ isPrimary: -1, name: 1 })
+        .lean();
+      const primary = firms.find((f) => f.isPrimary) ?? firms[0] ?? null;
+      ApiResponse.success(res, 'Firm context', { firms, primaryFirmId: primary?._id ?? null });
+    } catch (error) { next(error); }
+  }
+
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { search = '', page = 1, limit = 20, active } = req.query as any;

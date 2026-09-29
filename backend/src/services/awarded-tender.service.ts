@@ -1,21 +1,24 @@
 import { AwardedTenderRepository, TenderRepository } from '../repositories/index.js';
 import { IAwardedTenderDocument } from '../interfaces/tender.interface.js';
 import { ApiError } from '../utils/api-response.util.js';
-import { PaginationParams, PaginatedResult } from '../interfaces/common.interface.js';
+import { PaginationParams, PaginatedResult, FirmScope } from '../interfaces/common.interface.js';
 import { TenderStatus } from '../constants/status.constant.js';
+import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { escapeRegex } from '../utils/query.util.js';
 
 export class AwardedTenderService {
   private awardedRepo = new AwardedTenderRepository();
   private tenderRepo = new TenderRepository();
 
-  async getAwardedTenders(params: PaginationParams): Promise<PaginatedResult<IAwardedTenderDocument>> {
-    const filter: any = {};
+  async getAwardedTenders(params: PaginationParams, firmScope?: FirmScope): Promise<PaginatedResult<IAwardedTenderDocument>> {
+    const filter: any = { ...buildFirmFilter(firmScope) };
     if (params.search) {
+      const s = escapeRegex(params.search);
       filter.$or = [
-        { contractNumber: { $regex: params.search, $options: 'i' } },
-        { tenderNumber: { $regex: params.search, $options: 'i' } },
-        { clientName: { $regex: params.search, $options: 'i' } },
-        { title: { $regex: params.search, $options: 'i' } },
+        { contractNumber: { $regex: s, $options: 'i' } },
+        { tenderNumber: { $regex: s, $options: 'i' } },
+        { clientName: { $regex: s, $options: 'i' } },
+        { title: { $regex: s, $options: 'i' } },
       ];
     }
     if (params.executionStatus) {
@@ -32,13 +35,14 @@ export class AwardedTenderService {
     ]);
   }
 
-  async getAwardedTenderById(id: string): Promise<IAwardedTenderDocument> {
+  async getAwardedTenderById(id: string, firmScope?: FirmScope): Promise<IAwardedTenderDocument> {
     const awarded = await this.awardedRepo.findById(id, undefined, [
       { path: 'tender' },
       { path: 'approvedBy', select: 'name email' },
       { path: 'createdBy', select: 'name email' },
     ]);
     if (!awarded) throw ApiError.notFound('Awarded tender record not found');
+    assertFirmAccess((awarded as any).entity, firmScope);
     return awarded;
   }
 
@@ -47,6 +51,14 @@ export class AwardedTenderService {
     const estimatedCost = Number(data.estimatedCost || 0);
     const projectedProfit = awardValue - estimatedCost;
     const profitMarginPercent = awardValue > 0 ? Number(((projectedProfit / awardValue) * 100).toFixed(2)) : 0;
+
+    // Inherit entity from the parent tender — never from caller body.
+    if (data.tender) {
+      const parentTender = await this.tenderRepo.findById(data.tender);
+      if (parentTender && (parentTender as any).entity) {
+        data.entity = (parentTender as any).entity;
+      }
+    }
 
     const awarded = await this.awardedRepo.create({
       ...data,
@@ -65,13 +77,15 @@ export class AwardedTenderService {
     return awarded;
   }
 
-  async updateAwardedTender(id: string, data: any): Promise<IAwardedTenderDocument> {
+  async updateAwardedTender(id: string, data: any, firmScope?: FirmScope): Promise<IAwardedTenderDocument> {
     if (data.awardValue !== undefined || data.estimatedCost !== undefined) {
-      const existing = await this.getAwardedTenderById(id);
+      const existing = await this.getAwardedTenderById(id, firmScope);
       const awardValue = data.awardValue !== undefined ? Number(data.awardValue) : existing.awardValue;
       const estimatedCost = data.estimatedCost !== undefined ? Number(data.estimatedCost) : existing.estimatedCost;
       data.projectedProfit = awardValue - estimatedCost;
       data.profitMarginPercent = awardValue > 0 ? Number(((data.projectedProfit / awardValue) * 100).toFixed(2)) : 0;
+    } else {
+      await this.getAwardedTenderById(id, firmScope);
     }
 
     const updated = await this.awardedRepo.updateById(id, data);
@@ -79,7 +93,8 @@ export class AwardedTenderService {
     return updated;
   }
 
-  async approveAwardedTender(id: string, approverId: string): Promise<IAwardedTenderDocument> {
+  async approveAwardedTender(id: string, approverId: string, firmScope?: FirmScope): Promise<IAwardedTenderDocument> {
+    await this.getAwardedTenderById(id, firmScope);
     const awarded = await this.awardedRepo.updateById(id, {
       approvalStatus: 'Approved',
       approvedBy: approverId as any,
@@ -89,8 +104,8 @@ export class AwardedTenderService {
     return awarded;
   }
 
-  async deleteAwardedTender(id: string): Promise<void> {
-    await this.getAwardedTenderById(id);
+  async deleteAwardedTender(id: string, firmScope?: FirmScope): Promise<void> {
+    await this.getAwardedTenderById(id, firmScope);
     await this.awardedRepo.deleteById(id);
   }
 }

@@ -7,6 +7,8 @@ export interface IUser {
   password?: string;
   role: UserRole | string;
   customPermissions?: string[];
+  firmAccessMode?: 'All' | 'Restricted';
+  firmAccess?: Types.ObjectId[];
   phone?: string;
   avatar?: string;
   department?: string;

@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { PageHeader } from '../../components/common/PageHeader';
+import { useFirm } from '../../contexts/FirmContext';
+import { FirmSelect } from '../../components/firm/FirmSelect';
 
 interface ImportRecord {
   _id: string;
@@ -47,8 +49,12 @@ const statusColors: Record<string, string> = {
   Failed: 'text-red-400 bg-red-500/10 border-red-500/30',
 };
 
+const FIRM_REQUIRED_TYPES = new Set(['tenders', 'vehicles', 'work-orders']);
+
 export const ExcelImportPage: React.FC = () => {
+  const { defaultFirmId } = useFirm();
   const [selectedType, setSelectedType] = useState('tenders');
+  const [importFirmId, setImportFirmId] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -73,6 +79,10 @@ export const ExcelImportPage: React.FC = () => {
     fetchHistory();
   }, [fetchHistory]);
 
+  useEffect(() => {
+    setImportFirmId(defaultFirmId);
+  }, [defaultFirmId]);
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragOver(false);
@@ -95,12 +105,17 @@ export const ExcelImportPage: React.FC = () => {
 
   const handleUpload = async () => {
     if (!file) return;
+    if (FIRM_REQUIRED_TYPES.has(selectedType) && !importFirmId) {
+      setUploadResult({ success: false, message: 'Select the firm to assign these records to before importing.' });
+      return;
+    }
     setUploading(true);
     setUploadResult(null);
     try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('type', selectedType);
+      if (importFirmId) formData.append('firmId', importFirmId);
       const res = await api.post('/import-export/execute', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -173,6 +188,19 @@ export const ExcelImportPage: React.FC = () => {
                 </button>
               ))}
             </div>
+
+            {FIRM_REQUIRED_TYPES.has(selectedType) && (
+              <div className="mt-4">
+                <FirmSelect
+                  id="import-firm"
+                  label="Assign to firm *"
+                  value={importFirmId}
+                  onChange={setImportFirmId}
+                  required
+                  hint="All imported records will be assigned to this firm. Required for Tenders, Vehicles, and Work Orders."
+                />
+              </div>
+            )}
 
             <button
               onClick={() => handleDownloadTemplate(selectedTypeInfo?.template || '', selectedType)}

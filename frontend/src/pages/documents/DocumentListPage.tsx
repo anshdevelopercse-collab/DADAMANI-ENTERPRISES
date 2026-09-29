@@ -15,6 +15,8 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { FirmMultiSelect } from '../../components/firm/FirmSelect';
+import { FirmBadges } from '../../components/firm/FirmBadge';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable, Column } from '../../components/common/DataTable';
 import { Drawer } from '../../components/common/Drawer';
@@ -24,6 +26,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface Document {
   _id: string;
+  firms?: string[];
   name: string;
   description?: string;
   type: 'Tender' | 'Contract' | 'Vehicle' | 'Compliance' | 'Invoice' | 'Report' | 'Other';
@@ -68,12 +71,13 @@ interface UploadModalProps { open: boolean; onClose: () => void; onUploaded: () 
 
 const UploadModal: React.FC<UploadModalProps> = ({ open, onClose, onUploaded }) => {
   const [form, setForm] = useState({ name: '', description: '', type: 'Other', tags: '', expiryDate: '' });
+  const [firmIds, setFirmIds] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => { if (!open) { setForm({ name: '', description: '', type: 'Other', tags: '', expiryDate: '' }); setFile(null); setError(''); } }, [open]);
+  useEffect(() => { if (!open) { setForm({ name: '', description: '', type: 'Other', tags: '', expiryDate: '' }); setFirmIds([]); setFile(null); setError(''); } }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +88,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ open, onClose, onUploaded }) 
       const formData = new FormData();
       formData.append('file', file);
       Object.entries(form).forEach(([k, v]) => { if (v) formData.append(k, v); });
+      if (firmIds.length > 0) formData.append('firms', JSON.stringify(firmIds));
       await api.post('/documents/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       onUploaded(); onClose();
     } catch (err: any) { setError(err.response?.data?.message || 'Upload failed'); }
@@ -119,6 +124,13 @@ const UploadModal: React.FC<UploadModalProps> = ({ open, onClose, onUploaded }) 
             <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 text-sm" />
           </div>
+          <FirmMultiSelect
+            label="Assign to firms (optional — leave blank for shared/legacy)"
+            value={firmIds}
+            onChange={setFirmIds}
+            hint={firmIds.length > 1 ? 'This document will be visible to users of both firms.' : undefined}
+          />
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">Type</label>
@@ -232,6 +244,10 @@ export const DocumentListPage: React.FC = () => {
           {doc.type}
         </span>
       ),
+    },
+    {
+      header: 'Firms',
+      cell: (doc) => <FirmBadges firms={doc.firms} />,
     },
     {
       header: 'Size',

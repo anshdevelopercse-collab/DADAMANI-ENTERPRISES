@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { api } from '../../services/api';
-import { WorkOrder } from '../../types';
+import { ContractSelect } from '../../components/firm/ContractSelect';
 
 interface Props {
   isOpen: boolean;
@@ -21,7 +21,6 @@ const emptyForm = {
 
 export const ContractAdvanceFormModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) => {
   const [form, setForm] = useState(emptyForm);
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,16 +28,8 @@ export const ContractAdvanceFormModal: React.FC<Props> = ({ isOpen, onClose, onS
     if (isOpen) {
       setForm(emptyForm);
       setError(null);
-      fetchWorkOrders();
     }
   }, [isOpen]);
-
-  const fetchWorkOrders = async () => {
-    try {
-      const res = await api.get('/work-orders', { params: { limit: 100, status: 'In Progress' } });
-      setWorkOrders(res.data?.data || []);
-    } catch { /* non-blocking */ }
-  };
 
   const set = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }));
 
@@ -102,15 +93,13 @@ export const ContractAdvanceFormModal: React.FC<Props> = ({ isOpen, onClose, onS
           <div className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">{error}</div>
         )}
 
-        <div>
-          <label className={labelCls}>Contract / Work Order <span className="text-rose-400">*</span></label>
-          <select required value={form.workOrder} onChange={(e) => set('workOrder', e.target.value)} className={inputCls}>
-            <option value="">Select a work order…</option>
-            {workOrders.map((wo) => (
-              <option key={wo._id} value={wo._id}>{wo.orderNumber} — {wo.title} ({wo.clientName})</option>
-            ))}
-          </select>
-        </div>
+        <ContractSelect
+          id="advance-contract"
+          label="Contract / Work Order"
+          value={form.workOrder}
+          onChange={(contractId) => set('workOrder', contractId)}
+          required
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <div>

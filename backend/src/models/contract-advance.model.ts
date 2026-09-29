@@ -3,6 +3,7 @@ import { IContractAdvanceDocument } from '../interfaces/finance.interface.js';
 
 const ContractAdvanceSchema = new Schema<IContractAdvanceDocument>(
   {
+    entity: { type: Schema.Types.ObjectId, ref: 'Company', index: true },
     workOrder: { type: Schema.Types.ObjectId, ref: 'WorkOrder', required: true, index: true },
     recipientType: { type: String, enum: ['Workforce', 'User', 'External'], required: true },
     recipientRef: { type: Schema.Types.ObjectId, refPath: 'recipientTypeModel' },

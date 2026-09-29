@@ -10,6 +10,8 @@ import {
 } from '../repositories/index.js';
 import { ApiError } from '../utils/api-response.util.js';
 import { TenderStatus, FuelType, VehicleStatus, WorkOrderStatus } from '../constants/status.constant.js';
+import { FirmScope } from '../interfaces/common.interface.js';
+import { buildFirmFilter } from '../middlewares/firm-scope.middleware.js';
 
 export class ImportExportService {
   private tenderRepo = new TenderRepository();
@@ -129,7 +131,8 @@ export class ImportExportService {
     module: 'Tenders' | 'AwardedTenders' | 'Vehicles' | 'WorkOrders',
     headerMapping: Record<string, string>,
     options: { skipDuplicates?: boolean; allowPartial?: boolean } = {},
-    userId: string
+    userId: string,
+    firmId?: string
   ) {
     const preview = await this.previewAndValidate(fileBuffer, sheetName, module, headerMapping);
 
@@ -184,6 +187,7 @@ export class ImportExportService {
             location: mapped.location || 'Odisha HQ',
             scopeOfWork: mapped.scopeOfWork || 'General operations tender',
             createdBy: userId as any,
+            ...(firmId ? { entity: firmId as any } : {}),
           });
           importedRecords.push(created);
         } else if (module === 'Vehicles') {
@@ -213,6 +217,7 @@ export class ImportExportService {
             tax: { expiryDate: mapped.taxExpiry ? new Date(mapped.taxExpiry) : defaultDate, documentNumber: 'TAX-01' },
             puc: { expiryDate: mapped.pucExpiry ? new Date(mapped.pucExpiry) : defaultDate, documentNumber: 'PUC-01' },
             createdBy: userId as any,
+            ...(firmId ? { homeEntity: firmId as any } : {}),
           });
           importedRecords.push(created);
         } else if (module === 'WorkOrders') {
@@ -234,6 +239,7 @@ export class ImportExportService {
             targetEndDate: mapped.targetEndDate ? new Date(mapped.targetEndDate) : new Date(Date.now() + 60 * 86400000),
             status: (mapped.status as any) || WorkOrderStatus.ASSIGNED,
             createdBy: userId as any,
+            ...(firmId ? { entity: firmId as any } : {}),
           });
           importedRecords.push(created);
         }
@@ -273,11 +279,14 @@ export class ImportExportService {
 
   /**
    * Universal Export Generator (Excel, PDF, CSV)
+   * firmScope is applied to all entity-bearing modules so Restricted users
+   * only export data belonging to their authorized firms.
    */
   async generateExport(
     module: 'tenders' | 'awarded' | 'vehicles' | 'work-orders' | 'audit-logs',
     format: 'excel' | 'pdf' | 'csv',
-    filter: any = {}
+    filter: any = {},
+    firmScope?: FirmScope
   ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
     let title = '';
     let columns: { header: string; key: string; width?: number }[] = [];
@@ -295,7 +304,8 @@ export class ImportExportService {
         { header: 'Deadline', key: 'submissionDeadline', width: 18 },
         { header: 'Location', key: 'location', width: 20 },
       ];
-      data = await this.tenderRepo.find(filter, undefined, { createdAt: -1 });
+      const scopeFilter = buildFirmFilter(firmScope);
+      data = await this.tenderRepo.find({ ...scopeFilter }, undefined, { createdAt: -1 });
     } else if (module === 'vehicles') {
       title = 'Fleet Vehicles Report';
       columns = [
@@ -307,7 +317,8 @@ export class ImportExportService {
         { header: 'Location', key: 'currentLocation', width: 20 },
         { header: 'Odometer (KM)', key: 'odometerKm', width: 16 },
       ];
-      const vehicles = await this.vehicleRepo.find(filter, undefined, { createdAt: -1 });
+      const scopeFilter = buildFirmFilter(firmScope, 'homeEntity');
+      const vehicles = await this.vehicleRepo.find({ ...scopeFilter }, undefined, { createdAt: -1 });
       data = vehicles.map((v) => ({
         ...v.toObject(),
         makeModel: `${v.make} ${v.model}`,
@@ -324,7 +335,8 @@ export class ImportExportService {
         { header: 'Margin %', key: 'profitMarginPercent', width: 12 },
         { header: 'Status', key: 'executionStatus', width: 18 },
       ];
-      data = await this.awardedRepo.find(filter, undefined, { createdAt: -1 });
+      const scopeFilter = buildFirmFilter(firmScope);
+      data = await this.awardedRepo.find({ ...scopeFilter }, undefined, { createdAt: -1 });
     } else if (module === 'work-orders') {
       title = 'Work Orders Report';
       columns = [
@@ -337,7 +349,8 @@ export class ImportExportService {
         { header: 'Progress %', key: 'progressPercentage', width: 14 },
         { header: 'Status', key: 'status', width: 16 },
       ];
-      data = await this.workOrderRepo.find(filter, undefined, { createdAt: -1 });
+      const scopeFilter = buildFirmFilter(firmScope);
+      data = await this.workOrderRepo.find({ ...scopeFilter }, undefined, { createdAt: -1 });
     }
 
     if (format === 'excel') {

@@ -12,6 +12,7 @@ import { Drawer } from '../../components/common/Drawer';
 import { WorkforceFormModal } from './WorkforceFormModal';
 import { AssignWorkforceModal } from './AssignWorkforceModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { FirmBadge } from '../../components/firm/FirmBadge';
 
 export const WorkforceListPage: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -77,6 +78,7 @@ export const WorkforceListPage: React.FC = () => {
   const columns: Column<Workforce>[] = [
     { header: 'Name', cell: (w) => <span className="font-medium text-slate-100">{w.name}</span> },
     { header: 'Type', cell: (w) => <span className="text-slate-300">{w.type}</span> },
+    { header: 'Firm', cell: (w) => <FirmBadge firm={w.firm} size="sm" /> },
     { header: 'Phone', accessorKey: 'phone' },
     { header: 'Status', cell: (w) => <StatusBadge status={w.status} size="sm" /> },
     {

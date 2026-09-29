@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { api } from '../../services/api';
-import { WorkOrder, Tender } from '../../types';
+import { Tender } from '../../types';
+import { ContractSelect } from '../../components/firm/ContractSelect';
 
 interface Props {
   isOpen: boolean;
@@ -23,7 +24,6 @@ const emptyForm = {
 
 export const GemFeeFormModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) => {
   const [form, setForm] = useState(emptyForm);
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,20 +32,11 @@ export const GemFeeFormModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) =
     if (isOpen) {
       setForm(emptyForm);
       setError(null);
-      fetchData();
+      api.get('/tenders', { params: { limit: 100, status: 'Awarded' }, headers: { 'X-Firm-Scope': 'all' } })
+        .then((r) => setTenders(r.data?.data || []))
+        .catch(() => setTenders([]));
     }
   }, [isOpen]);
-
-  const fetchData = async () => {
-    try {
-      const [woRes, tRes] = await Promise.all([
-        api.get('/work-orders', { params: { limit: 100 } }),
-        api.get('/tenders', { params: { limit: 100, status: 'Awarded' } }),
-      ]);
-      setWorkOrders(woRes.data?.data || []);
-      setTenders(tRes.data?.data || []);
-    } catch { /* non-blocking */ }
-  };
 
   const set = (f: string, v: string) => setForm((prev) => ({ ...prev, [f]: v }));
 
@@ -107,15 +98,13 @@ export const GemFeeFormModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) =
           <div className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">{error}</div>
         )}
 
-        <div>
-          <label className={labelCls}>Contract / Work Order <span className="text-rose-400">*</span></label>
-          <select required value={form.workOrder} onChange={(e) => set('workOrder', e.target.value)} className={inputCls}>
-            <option value="">Select work order…</option>
-            {workOrders.map((wo) => (
-              <option key={wo._id} value={wo._id}>{wo.orderNumber} — {wo.title} ({wo.clientName})</option>
-            ))}
-          </select>
-        </div>
+        <ContractSelect
+          id="gem-contract"
+          label="Contract / Work Order"
+          value={form.workOrder}
+          onChange={(contractId) => set('workOrder', contractId)}
+          required
+        />
 
         <div>
           <label className={labelCls}>Related Tender (optional)</label>

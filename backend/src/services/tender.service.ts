@@ -1,16 +1,18 @@
 import { TenderRepository } from '../repositories/index.js';
 import { ITenderDocument } from '../interfaces/tender.interface.js';
 import { ApiError } from '../utils/api-response.util.js';
-import { PaginationParams, PaginatedResult } from '../interfaces/common.interface.js';
+import { PaginationParams, PaginatedResult, FirmScope } from '../interfaces/common.interface.js';
 import { TenderStatus } from '../constants/status.constant.js';
 import { EmailService } from './email.service.js';
 import { User } from '../models/user.model.js';
+import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { escapeRegex } from '../utils/query.util.js';
 
 export class TenderService {
   private tenderRepo = new TenderRepository();
 
-  async getTenders(params: PaginationParams): Promise<PaginatedResult<ITenderDocument>> {
-    const filter: any = {};
+  async getTenders(params: PaginationParams, firmScope?: FirmScope): Promise<PaginatedResult<ITenderDocument>> {
+    const filter: any = { ...buildFirmFilter(firmScope) };
 
     // Archive filter
     if (params.isArchived !== undefined) {
@@ -20,11 +22,12 @@ export class TenderService {
     }
 
     if (params.search) {
+      const s = escapeRegex(params.search);
       filter.$or = [
-        { tenderNumber: { $regex: params.search, $options: 'i' } },
-        { title: { $regex: params.search, $options: 'i' } },
-        { clientName: { $regex: params.search, $options: 'i' } },
-        { location: { $regex: params.search, $options: 'i' } },
+        { tenderNumber: { $regex: s, $options: 'i' } },
+        { title: { $regex: s, $options: 'i' } },
+        { clientName: { $regex: s, $options: 'i' } },
+        { location: { $regex: s, $options: 'i' } },
       ];
     }
 
@@ -46,13 +49,14 @@ export class TenderService {
     ]);
   }
 
-  async getTenderById(id: string): Promise<ITenderDocument> {
+  async getTenderById(id: string, firmScope?: FirmScope): Promise<ITenderDocument> {
     const tender = await this.tenderRepo.findById(id, undefined, [
       { path: 'assignedManager', select: 'name email phone' },
       { path: 'createdBy', select: 'name email' },
       { path: 'comments.user', select: 'name email avatar' },
     ]);
     if (!tender) throw ApiError.notFound('Tender not found');
+    assertFirmAccess((tender as any).entity, firmScope);
     return tender;
   }
 
@@ -93,8 +97,8 @@ export class TenderService {
     return tender;
   }
 
-  async updateTender(id: string, data: any, userId: string, userName: string): Promise<ITenderDocument> {
-    const tender = await this.getTenderById(id);
+  async updateTender(id: string, data: any, userId: string, userName: string, firmScope?: FirmScope): Promise<ITenderDocument> {
+    const tender = await this.getTenderById(id, firmScope);
 
     const timelineEvent = {
       action: 'Tender Updated',
@@ -113,8 +117,8 @@ export class TenderService {
     return updated;
   }
 
-  async addComment(id: string, commentText: string, user: any): Promise<ITenderDocument> {
-    const tender = await this.getTenderById(id);
+  async addComment(id: string, commentText: string, user: any, firmScope?: FirmScope): Promise<ITenderDocument> {
+    const tender = await this.getTenderById(id, firmScope);
     tender.comments = tender.comments || [];
     tender.comments.push({
       user: user._id,
@@ -137,8 +141,8 @@ export class TenderService {
     return tender;
   }
 
-  async archiveTender(id: string, userId: string, userName: string): Promise<ITenderDocument> {
-    const tender = await this.getTenderById(id);
+  async archiveTender(id: string, userId: string, userName: string, firmScope?: FirmScope): Promise<ITenderDocument> {
+    const tender = await this.getTenderById(id, firmScope);
     tender.isArchived = true;
     tender.archivedAt = new Date();
     tender.timeline = tender.timeline || [];
@@ -152,8 +156,8 @@ export class TenderService {
     return tender;
   }
 
-  async restoreTender(id: string, userId: string, userName: string): Promise<ITenderDocument> {
-    const tender = await this.getTenderById(id);
+  async restoreTender(id: string, userId: string, userName: string, firmScope?: FirmScope): Promise<ITenderDocument> {
+    const tender = await this.getTenderById(id, firmScope);
     tender.isArchived = false;
     tender.archivedAt = undefined;
     tender.timeline = tender.timeline || [];
@@ -167,8 +171,8 @@ export class TenderService {
     return tender;
   }
 
-  async deleteTender(id: string): Promise<void> {
-    await this.getTenderById(id);
+  async deleteTender(id: string, firmScope?: FirmScope): Promise<void> {
+    await this.getTenderById(id, firmScope);
     await this.tenderRepo.deleteById(id);
   }
 }

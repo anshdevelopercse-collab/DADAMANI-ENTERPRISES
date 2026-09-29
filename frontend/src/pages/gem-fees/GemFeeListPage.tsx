@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../../components/common/ConfirmDialog';
 import { Drawer } from '../../components/common/Drawer';
 import { GemFeeFormModal } from './GemFeeFormModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { FirmBadge } from '../../components/firm/FirmBadge';
 
 const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
@@ -65,6 +66,7 @@ export const GemFeeListPage: React.FC = () => {
   const FEE_TYPES = ['GEM Portal Fee', 'Transaction Charge', 'Handling Fee', 'Other'];
 
   const columns: Column<GemFee>[] = [
+    { header: 'Firm', cell: (f) => <FirmBadge firm={(f as any).firm} /> },
     {
       header: 'Contract',
       cell: (f) => {

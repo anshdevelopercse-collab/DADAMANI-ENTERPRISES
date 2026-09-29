@@ -19,6 +19,8 @@ import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable, Column } from '../../components/common/DataTable';
 import { StatCard } from '../../components/common/StatCard';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFirm } from '../../contexts/FirmContext';
+import { FirmBadges } from '../../components/firm/FirmBadge';
 
 interface User {
   _id: string;
@@ -27,6 +29,8 @@ interface User {
   role: 'Admin' | 'Manager' | 'Viewer';
   isActive: boolean;
   customPermissions?: string[];
+  firmAccessMode?: 'All' | 'Restricted';
+  firmAccess?: any[];
   lastLogin?: string;
   createdAt: string;
 }
@@ -170,6 +174,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ open, onClose, user, onSa
 
 export const UserListPage: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const { firms } = useFirm();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -237,9 +242,15 @@ export const UserListPage: React.FC = () => {
         </div>
       ),
     },
+    ...(firms.length >= 2 ? [{
+      header: 'Firm Access',
+      cell: (u: User) => u.firmAccessMode === 'Restricted'
+        ? <FirmBadges firms={u.firmAccess || []} />
+        : <span className="text-xs text-slate-500 italic">All firms</span>,
+    }] : []),
     {
       header: 'Last Login',
-      cell: (u) => <span className="text-slate-400 text-sm">{u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-IN') : 'Never'}</span>,
+      cell: (u: User) => <span className="text-slate-400 text-sm">{u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('en-IN') : 'Never'}</span>,
     },
     {
       header: 'Created',

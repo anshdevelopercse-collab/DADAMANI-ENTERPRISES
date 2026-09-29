@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { api } from '../../services/api';
+import { ContractSelect } from '../../components/firm/ContractSelect';
 
 interface InvoiceFormModalProps {
   isOpen: boolean;
@@ -20,7 +21,6 @@ const emptyForm = {
 
 export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({ isOpen, onClose, onSaved }) => {
   const [form, setForm] = useState(emptyForm);
-  const [workOrders, setWorkOrders] = useState<{ _id: string; orderNumber: string; title: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +28,6 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({ isOpen, onCl
     if (!isOpen) return;
     setForm(emptyForm);
     setError(null);
-    api.get('/work-orders', { params: { limit: 100 } }).then((res) => setWorkOrders(res.data?.data || []));
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,20 +70,13 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({ isOpen, onCl
       <form id="invoice-form" onSubmit={handleSubmit} className="space-y-4">
         {error && <div className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">{error}</div>}
 
-        <div>
-          <label className="block text-xs font-medium text-slate-400 mb-1.5">Work Order / Contract</label>
-          <select
-            required
-            value={form.workOrder}
-            onChange={(e) => setForm({ ...form, workOrder: e.target.value })}
-            className="w-full px-3 py-2 bg-slate-950/70 border border-slate-800 rounded-lg text-sm text-slate-200 focus:outline-none focus:border-sky-500"
-          >
-            <option value="">Select a contract…</option>
-            {workOrders.map((wo) => (
-              <option key={wo._id} value={wo._id}>{wo.orderNumber} — {wo.title}</option>
-            ))}
-          </select>
-        </div>
+        <ContractSelect
+          id="invoice-contract"
+          label="Contract (Work Order)"
+          value={form.workOrder}
+          onChange={(contractId) => setForm({ ...form, workOrder: contractId })}
+          required
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <div>

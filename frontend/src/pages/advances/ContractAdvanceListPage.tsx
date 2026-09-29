@@ -13,6 +13,7 @@ import { Drawer } from '../../components/common/Drawer';
 import { ContractAdvanceFormModal } from './ContractAdvanceFormModal';
 import { AdjustAdvanceModal } from './AdjustAdvanceModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { FirmBadge } from '../../components/firm/FirmBadge';
 
 const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
@@ -80,6 +81,7 @@ export const ContractAdvanceListPage: React.FC = () => {
   };
 
   const columns: Column<ContractAdvance>[] = [
+    { header: 'Firm', cell: (a) => <FirmBadge firm={(a as any).firm} /> },
     {
       header: 'Contract',
       cell: (a) => {

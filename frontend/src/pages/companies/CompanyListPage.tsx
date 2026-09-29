@@ -14,6 +14,7 @@ interface Company {
   _id: string;
   name: string;
   code: string;
+  isPrimary?: boolean;
   registrationNumber?: string;
   gstNumber?: string;
   panNumber?: string;
@@ -70,10 +71,17 @@ export const CompanyListPage: React.FC = () => {
 
   const columns: Column<Company>[] = [
     {
-      header: 'Entity',
+      header: 'Firm',
       cell: (c) => (
         <div>
-          <div className="font-medium text-slate-100">{c.name}</div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-slate-100">{c.name}</span>
+            {c.isPrimary && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-sky-500/15 text-sky-300 border border-sky-500/30">
+                primary
+              </span>
+            )}
+          </div>
           <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-sky-400">{c.code}</span>
         </div>
       ),
@@ -134,10 +142,10 @@ export const CompanyListPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Legal Entities"
-        subtitle="Registered companies and legal entities — used to assign contracts and personnel"
+        title="Firms"
+        subtitle="Registered firms — used to assign tenders, contracts, vehicles and personnel"
         onAddClick={hasPermission('company:manage') ? () => { setEditTarget(null); setFormOpen(true); } : undefined}
-        addLabel="Register Entity"
+        addLabel="Register Firm"
       />
 
       {/* Empty state notice when no entities configured */}

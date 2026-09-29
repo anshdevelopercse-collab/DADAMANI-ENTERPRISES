@@ -7,6 +7,12 @@ import {
 } from '../repositories/index.js';
 import { TenderStatus, VehicleStatus, WorkOrderStatus } from '../constants/status.constant.js';
 import { VehicleService } from './vehicle.service.js';
+import { FirmScope } from '../interfaces/common.interface.js';
+import { buildFirmFilter } from '../middlewares/firm-scope.middleware.js';
+import { AwardedTender } from '../models/awarded-tender.model.js';
+import { Invoice } from '../models/invoice.model.js';
+import { ContractAdvance } from '../models/contract-advance.model.js';
+import { Company } from '../models/company.model.js';
 
 export class DashboardService {
   private tenderRepo = new TenderRepository();
@@ -16,7 +22,8 @@ export class DashboardService {
   private auditRepo = new AuditLogRepository();
   private vehicleService = new VehicleService();
 
-  async getDashboardMetrics(): Promise<any> {
+  async getDashboardMetrics(firmScope?: FirmScope): Promise<any> {
+    const scopeFilter = buildFirmFilter(firmScope);
     const [
       totalTenders,
       draftTenders,
@@ -34,19 +41,19 @@ export class DashboardService {
       recentLogs,
       upcomingExpiries,
     ] = await Promise.all([
-      this.tenderRepo.count({ isArchived: false }),
-      this.tenderRepo.count({ status: TenderStatus.DRAFT, isArchived: false }),
-      this.tenderRepo.count({ status: TenderStatus.SUBMITTED, isArchived: false }),
-      this.tenderRepo.count({ status: TenderStatus.AWARDED, isArchived: false }),
-      this.tenderRepo.count({ status: TenderStatus.REJECTED, isArchived: false }),
-      this.tenderRepo.count({ status: TenderStatus.CANCELLED, isArchived: false }),
-      this.vehicleRepo.count(),
-      this.vehicleRepo.count({ status: VehicleStatus.ACTIVE }),
-      this.vehicleRepo.count({ status: VehicleStatus.MAINTENANCE }),
-      this.workOrderRepo.count(),
-      this.workOrderRepo.count({ status: { $in: [WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS] } }),
-      this.workOrderRepo.count({ status: WorkOrderStatus.COMPLETED }),
-      this.awardedRepo.find({}, 'awardValue projectedProfit awardedDate executionStatus'),
+      this.tenderRepo.count({ isArchived: false, ...scopeFilter }),
+      this.tenderRepo.count({ status: TenderStatus.DRAFT, isArchived: false, ...scopeFilter }),
+      this.tenderRepo.count({ status: TenderStatus.SUBMITTED, isArchived: false, ...scopeFilter }),
+      this.tenderRepo.count({ status: TenderStatus.AWARDED, isArchived: false, ...scopeFilter }),
+      this.tenderRepo.count({ status: TenderStatus.REJECTED, isArchived: false, ...scopeFilter }),
+      this.tenderRepo.count({ status: TenderStatus.CANCELLED, isArchived: false, ...scopeFilter }),
+      this.vehicleRepo.count(buildFirmFilter(firmScope, 'homeEntity')),
+      this.vehicleRepo.count({ status: VehicleStatus.ACTIVE, ...buildFirmFilter(firmScope, 'homeEntity') }),
+      this.vehicleRepo.count({ status: VehicleStatus.MAINTENANCE, ...buildFirmFilter(firmScope, 'homeEntity') }),
+      this.workOrderRepo.count(scopeFilter),
+      this.workOrderRepo.count({ status: { $in: [WorkOrderStatus.ASSIGNED, WorkOrderStatus.IN_PROGRESS] }, ...scopeFilter }),
+      this.workOrderRepo.count({ status: WorkOrderStatus.COMPLETED, ...scopeFilter }),
+      this.awardedRepo.find(scopeFilter, 'awardValue projectedProfit awardedDate executionStatus entity'),
       this.auditRepo.find({}, undefined, { createdAt: -1 }, 10),
       this.vehicleService.getUpcomingComplianceExpiries(30),
     ]);
@@ -79,8 +86,8 @@ export class DashboardService {
 
       monthlyRevenue.push({
         month: monthName,
-        revenue: val > 0 ? val / 100000 : Math.round(15 + Math.random() * 40), // in Lakhs
-        profit: val > 0 ? (val * 0.18) / 100000 : Math.round(3 + Math.random() * 10),
+        revenue: val > 0 ? val / 100000 : 0, // in Lakhs
+        profit: val > 0 ? (val * 0.18) / 100000 : 0,
       });
     }
 
@@ -90,6 +97,36 @@ export class DashboardService {
       { status: 'Under Maintenance', count: maintenanceVehicles, color: '#f59e0b' },
       { status: 'Idle / Available', count: Math.max(0, totalVehicles - activeVehicles - maintenanceVehicles), color: '#6366f1' },
     ];
+
+    // Per-firm financial breakdown for multi-firm summary cards
+    const [revenueByFirm, invoicedByFirm, advancesByFirm, firmsList] = await Promise.all([
+      AwardedTender.aggregate([
+        { $match: { entity: { $exists: true, $ne: null } } },
+        { $group: { _id: '$entity', revenue: { $sum: '$awardValue' } } },
+      ]),
+      Invoice.aggregate([
+        { $match: { entity: { $exists: true, $ne: null } } },
+        { $group: { _id: '$entity', invoiced: { $sum: '$amount' } } },
+      ]),
+      ContractAdvance.aggregate([
+        { $match: { entity: { $exists: true, $ne: null } } },
+        { $group: { _id: '$entity', advances: { $sum: '$amount' } } },
+      ]),
+      Company.find({ isActive: true }).select('_id name code isPrimary').lean(),
+    ]);
+
+    const financialByFirm = firmsList.map((firm) => {
+      const fid = firm._id.toString();
+      return {
+        firmId: fid,
+        firmName: firm.name,
+        firmCode: firm.code,
+        isPrimary: firm.isPrimary,
+        revenue: revenueByFirm.find((r: any) => r._id?.toString() === fid)?.revenue ?? 0,
+        invoiced: invoicedByFirm.find((r: any) => r._id?.toString() === fid)?.invoiced ?? 0,
+        advances: advancesByFirm.find((r: any) => r._id?.toString() === fid)?.advances ?? 0,
+      };
+    });
 
     return {
       cards: {
@@ -115,6 +152,7 @@ export class DashboardService {
       },
       recentActivity: recentLogs,
       upcomingExpiries: upcomingExpiries.slice(0, 5),
+      financialByFirm,
     };
   }
 }

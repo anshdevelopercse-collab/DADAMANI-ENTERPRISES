@@ -17,13 +17,13 @@ import { AdvanceAdjustment } from '../models/advance-adjustment.model.js';
 export class InvoiceController {
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await invoiceService.list(req.query as any);
+      const result = await invoiceService.list(req.query as any, req.firmScope);
       ApiResponse.success(res, 'Invoices retrieved', result.data, result.pagination);
     } catch (error) { next(error); }
   }
   static async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const invoice = await invoiceService.getById(getId(req.params.id));
+      const invoice = await invoiceService.getById(getId(req.params.id), req.firmScope);
       ApiResponse.success(res, 'Invoice retrieved', invoice);
     } catch (error) { next(error); }
   }
@@ -36,7 +36,7 @@ export class InvoiceController {
   }
   static async update(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const invoice = await invoiceService.update(getId(req.params.id), req.body);
+      const invoice = await invoiceService.update(getId(req.params.id), req.body, req.firmScope);
       await logAudit(req, 'WORK_ORDERS', AuditAction.UPDATE, `Updated invoice ${invoice.invoiceNumber}`, invoice._id.toString());
       ApiResponse.success(res, 'Invoice updated', invoice);
     } catch (error) { next(error); }
@@ -44,7 +44,7 @@ export class InvoiceController {
   static async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = getId(req.params.id);
-      await invoiceService.delete(id);
+      await invoiceService.delete(id, req.firmScope);
       await logAudit(req, 'WORK_ORDERS', AuditAction.DELETE, `Deleted invoice ${id}`, id);
       ApiResponse.success(res, 'Invoice deleted');
     } catch (error) { next(error); }
@@ -64,13 +64,13 @@ export class InvoiceController {
 export class ContractAdvanceController {
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await advanceService.list(req.query as any);
+      const result = await advanceService.list(req.query as any, req.firmScope);
       ApiResponse.success(res, 'Contract advances retrieved', result.data, result.pagination);
     } catch (error) { next(error); }
   }
   static async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const advance = await advanceService.getById(getId(req.params.id));
+      const advance = await advanceService.getById(getId(req.params.id), req.firmScope);
       ApiResponse.success(res, 'Contract advance retrieved', advance);
     } catch (error) { next(error); }
   }
@@ -104,7 +104,7 @@ export class ContractAdvanceController {
   static async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = getId(req.params.id);
-      await advanceService.delete(id);
+      await advanceService.delete(id, req.firmScope);
       await logAudit(req, 'WORK_ORDERS', AuditAction.DELETE, `Deleted contract advance ${id}`, id);
       ApiResponse.success(res, 'Contract advance deleted');
     } catch (error) { next(error); }
@@ -114,13 +114,13 @@ export class ContractAdvanceController {
 export class GemFeeController {
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await gemFeeService.list(req.query as any);
+      const result = await gemFeeService.list(req.query as any, req.firmScope);
       ApiResponse.success(res, 'GEM fees retrieved', result.data, result.pagination);
     } catch (error) { next(error); }
   }
   static async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const fee = await gemFeeService.getById(getId(req.params.id));
+      const fee = await gemFeeService.getById(getId(req.params.id), req.firmScope);
       ApiResponse.success(res, 'GEM fee retrieved', fee);
     } catch (error) { next(error); }
   }
@@ -134,7 +134,7 @@ export class GemFeeController {
   static async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = getId(req.params.id);
-      await gemFeeService.delete(id);
+      await gemFeeService.delete(id, req.firmScope);
       await logAudit(req, 'WORK_ORDERS', AuditAction.DELETE, `Deleted GEM fee ${id}`, id);
       ApiResponse.success(res, 'GEM fee deleted');
     } catch (error) { next(error); }

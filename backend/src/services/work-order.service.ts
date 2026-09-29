@@ -1,27 +1,30 @@
 import { WorkOrderRepository } from '../repositories/index.js';
 import { IWorkOrderDocument } from '../interfaces/work-order.interface.js';
 import { ApiError } from '../utils/api-response.util.js';
-import { PaginationParams, PaginatedResult } from '../interfaces/common.interface.js';
+import { PaginationParams, PaginatedResult, FirmScope } from '../interfaces/common.interface.js';
 import { WorkOrderStatus } from '../constants/status.constant.js';
 import { EmailService } from './email.service.js';
 import { User } from '../models/user.model.js';
 import { WorkOrder } from '../models/work-order.model.js';
 import { VehicleAllocationService } from './vehicle-allocation.service.js';
 import { runInTransaction } from '../utils/transaction.util.js';
+import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { escapeRegex } from '../utils/query.util.js';
 
 export class WorkOrderService {
   private workOrderRepo = new WorkOrderRepository();
   private vehicleAllocationService = new VehicleAllocationService();
 
-  async getWorkOrders(params: PaginationParams): Promise<PaginatedResult<IWorkOrderDocument>> {
-    const filter: any = {};
+  async getWorkOrders(params: PaginationParams, firmScope?: FirmScope): Promise<PaginatedResult<IWorkOrderDocument>> {
+    const filter: any = { ...buildFirmFilter(firmScope) };
     if (params.search) {
+      const s = escapeRegex(params.search);
       filter.$or = [
-        { orderNumber: { $regex: params.search, $options: 'i' } },
-        { title: { $regex: params.search, $options: 'i' } },
-        { clientName: { $regex: params.search, $options: 'i' } },
-        { assignedProject: { $regex: params.search, $options: 'i' } },
-        { siteLocation: { $regex: params.search, $options: 'i' } },
+        { orderNumber: { $regex: s, $options: 'i' } },
+        { title: { $regex: s, $options: 'i' } },
+        { clientName: { $regex: s, $options: 'i' } },
+        { assignedProject: { $regex: s, $options: 'i' } },
+        { siteLocation: { $regex: s, $options: 'i' } },
       ];
     }
     if (params.status) filter.status = params.status;
@@ -36,7 +39,7 @@ export class WorkOrderService {
     ]);
   }
 
-  async getWorkOrderById(id: string): Promise<IWorkOrderDocument> {
+  async getWorkOrderById(id: string, firmScope?: FirmScope): Promise<IWorkOrderDocument> {
     const wo = await this.workOrderRepo.findById(id, undefined, [
       { path: 'assignedManager', select: 'name email phone' },
       { path: 'assignedVehicles', select: 'registrationNumber make model capacityTonnes status' },
@@ -45,6 +48,7 @@ export class WorkOrderService {
       { path: 'createdBy', select: 'name email' },
     ]);
     if (!wo) throw ApiError.notFound('Work order not found');
+    assertFirmAccess((wo as any).entity, firmScope);
     return wo;
   }
 
@@ -111,18 +115,15 @@ export class WorkOrderService {
     return wo;
   }
 
-  async updateWorkOrder(id: string, data: any, updatedById?: string): Promise<IWorkOrderDocument> {
+  async updateWorkOrder(id: string, data: any, updatedById?: string, firmScope?: FirmScope): Promise<IWorkOrderDocument> {
     if (data.status === WorkOrderStatus.COMPLETED && !data.actualEndDate) {
       data.actualEndDate = new Date();
       data.progressPercentage = 100;
     }
 
-    // If the caller is changing which vehicles are assigned, reconcile the
-    // allocation ledger: newly added vehicles go through the same
-    // double-booking guard as creation; removed vehicles get their
-    // allocation closed out (history preserved, not deleted).
+    const existing = await this.getWorkOrderById(id, firmScope);
+
     if (Array.isArray(data.assignedVehicles)) {
-      const existing = await this.getWorkOrderById(id);
       const currentIds = (existing.assignedVehicles || []).map((v: any) => (v._id ? v._id.toString() : v.toString()));
       const nextIds: string[] = data.assignedVehicles.map((v: any) => v.toString());
 
@@ -165,9 +166,10 @@ export class WorkOrderService {
     id: string,
     milestoneId: string,
     status: 'Pending' | 'In Progress' | 'Completed',
-    progressPercentage: number
+    progressPercentage: number,
+    firmScope?: FirmScope
   ): Promise<IWorkOrderDocument> {
-    const wo = await this.getWorkOrderById(id);
+    const wo = await this.getWorkOrderById(id, firmScope);
     const milestone = (wo.milestones as any)?.id(milestoneId);
     if (!milestone) throw ApiError.notFound('Milestone not found');
 
@@ -195,9 +197,10 @@ export class WorkOrderService {
     id: string,
     invoiceNumber: string,
     invoicedAmount: number,
-    invoiceStatus: 'Draft' | 'Sent' | 'Paid' | 'Partially Paid' = 'Sent'
+    invoiceStatus: 'Draft' | 'Sent' | 'Paid' | 'Partially Paid' = 'Sent',
+    firmScope?: FirmScope
   ): Promise<IWorkOrderDocument> {
-    const wo = await this.getWorkOrderById(id);
+    const wo = await this.getWorkOrderById(id, firmScope);
     wo.invoiceNumber = invoiceNumber;
     wo.invoicedAmount = invoicedAmount;
     wo.invoiceDate = new Date();
@@ -208,8 +211,8 @@ export class WorkOrderService {
     return wo;
   }
 
-  async addComment(id: string, comment: string, user: any): Promise<IWorkOrderDocument> {
-    const wo = await this.getWorkOrderById(id);
+  async addComment(id: string, comment: string, user: any, firmScope?: FirmScope): Promise<IWorkOrderDocument> {
+    const wo = await this.getWorkOrderById(id, firmScope);
     wo.comments = wo.comments || [];
     wo.comments.push({
       user: user._id,
@@ -221,8 +224,8 @@ export class WorkOrderService {
     return wo;
   }
 
-  async deleteWorkOrder(id: string): Promise<void> {
-    await this.getWorkOrderById(id);
+  async deleteWorkOrder(id: string, firmScope?: FirmScope): Promise<void> {
+    await this.getWorkOrderById(id, firmScope);
     await this.workOrderRepo.deleteById(id);
   }
 }

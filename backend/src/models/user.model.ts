@@ -16,6 +16,8 @@ const UserSchema = new Schema<IUserDocument>(
       index: true,
     },
     customPermissions: [{ type: String }],
+    firmAccessMode: { type: String, enum: ['All', 'Restricted'], default: 'All' },
+    firmAccess: [{ type: Schema.Types.ObjectId, ref: 'Company' }],
     phone: { type: String, trim: true },
     avatar: { type: String },
     department: { type: String, trim: true },

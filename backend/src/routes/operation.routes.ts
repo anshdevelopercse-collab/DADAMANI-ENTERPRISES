@@ -13,6 +13,7 @@ import {
   requirePermission,
   requireRoles,
   validateBody,
+  resolveFirmScope,
 } from '../middlewares/index.js';
 import { PERMISSIONS } from '../constants/permissions.constant.js';
 import { UserRole } from '../constants/status.constant.js';
@@ -31,11 +32,13 @@ import {
 // --- Dashboard Routes ---
 export const dashboardRouter = Router();
 dashboardRouter.use(authenticateJwt);
+dashboardRouter.use(resolveFirmScope);
 dashboardRouter.get('/metrics', DashboardController.getMetrics);
 
 // --- Tenders Routes ---
 export const tenderRouter = Router();
 tenderRouter.use(authenticateJwt);
+tenderRouter.use(resolveFirmScope);
 tenderRouter.get('/', requirePermission(PERMISSIONS.TENDER_READ), TenderController.list);
 tenderRouter.get('/:id', requirePermission(PERMISSIONS.TENDER_READ), TenderController.getById);
 tenderRouter.post('/', requirePermission(PERMISSIONS.TENDER_CREATE), validateBody(TenderCreateSchema), TenderController.create);
@@ -48,6 +51,7 @@ tenderRouter.delete('/:id', requirePermission(PERMISSIONS.TENDER_DELETE), Tender
 // --- Awarded Tenders Routes ---
 export const awardedRouter = Router();
 awardedRouter.use(authenticateJwt);
+awardedRouter.use(resolveFirmScope);
 awardedRouter.get('/', requirePermission(PERMISSIONS.AWARDED_READ), AwardedTenderController.list);
 awardedRouter.get('/:id', requirePermission(PERMISSIONS.AWARDED_READ), AwardedTenderController.getById);
 awardedRouter.post('/', requirePermission(PERMISSIONS.AWARDED_CREATE), validateBody(AwardedTenderCreateSchema), AwardedTenderController.create);
@@ -58,6 +62,7 @@ awardedRouter.delete('/:id', requirePermission(PERMISSIONS.AWARDED_DELETE), Awar
 // --- Vehicles & Drivers Routes ---
 export const vehicleRouter = Router();
 vehicleRouter.use(authenticateJwt);
+vehicleRouter.use(resolveFirmScope);
 vehicleRouter.get('/compliance/alerts', requirePermission(PERMISSIONS.VEHICLE_READ), VehicleController.getComplianceAlerts);
 vehicleRouter.get('/drivers/list', requirePermission(PERMISSIONS.VEHICLE_READ), VehicleController.listDrivers);
 vehicleRouter.post('/drivers/create', requirePermission(PERMISSIONS.VEHICLE_ASSIGN), VehicleController.createDriver);
@@ -74,6 +79,7 @@ vehicleRouter.delete('/:id', requirePermission(PERMISSIONS.VEHICLE_DELETE), Vehi
 // --- Work Orders Routes ---
 export const workOrderRouter = Router();
 workOrderRouter.use(authenticateJwt);
+workOrderRouter.use(resolveFirmScope);
 workOrderRouter.get('/', requirePermission(PERMISSIONS.WORK_ORDER_READ), WorkOrderController.list);
 workOrderRouter.get('/:id', requirePermission(PERMISSIONS.WORK_ORDER_READ), WorkOrderController.getById);
 workOrderRouter.post('/', requirePermission(PERMISSIONS.WORK_ORDER_CREATE), validateBody(WorkOrderCreateSchema), WorkOrderController.create);

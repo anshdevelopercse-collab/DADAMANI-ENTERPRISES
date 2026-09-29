@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Tender } from '../../types';
+import { useFirm } from '../../contexts/FirmContext';
+import { FirmSelect } from '../../components/firm/FirmSelect';
+
+const firmIdOf = (f: any): string => (!f ? '' : typeof f === 'string' ? f : f._id);
 
 interface TenderFormModalProps {
   isOpen: boolean;
@@ -16,6 +20,8 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
   onSuccess,
   tenderToEdit,
 }) => {
+  const { defaultFirmId } = useFirm();
+  const [firm, setFirm] = useState('');
   const [formData, setFormData] = useState({
     tenderNumber: '',
     title: '',
@@ -35,6 +41,7 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
 
   useEffect(() => {
     if (tenderToEdit) {
+      setFirm(firmIdOf(tenderToEdit.firm));
       setFormData({
         tenderNumber: tenderToEdit.tenderNumber,
         title: tenderToEdit.title,
@@ -50,6 +57,7 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
         scopeOfWork: tenderToEdit.scopeOfWork || '',
       });
     } else {
+      setFirm(defaultFirmId);
       setFormData({
         tenderNumber: `DMI/TND-${new Date().getFullYear()}/${Math.floor(100 + Math.random() * 900)}`,
         title: '',
@@ -72,14 +80,19 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!tenderToEdit && !firm) {
+      setError('Select the firm bidding for this tender');
+      return;
+    }
     setLoading(true);
 
     try {
-      const payload = {
+      const payload: any = {
         ...formData,
         estimatedValue: Number(formData.estimatedValue),
         earnestMoneyDeposit: Number(formData.earnestMoneyDeposit || 0),
       };
+      if (firm) payload.firm = firm;
 
       if (tenderToEdit) {
         await api.put(`/tenders/${tenderToEdit._id}`, payload);
@@ -119,6 +132,14 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <FirmSelect
+            id="tender-firm"
+            label="Bidding firm"
+            value={firm}
+            onChange={setFirm}
+            hint={tenderToEdit && !firmIdOf(tenderToEdit.firm) ? 'This tender predates firm tracking. Selecting a firm assigns it permanently.' : undefined}
+          />
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">

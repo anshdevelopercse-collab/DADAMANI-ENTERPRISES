@@ -4,6 +4,7 @@ import { IUserDocument } from '../interfaces/user.interface.js';
 import { ApiError } from '../utils/api-response.util.js';
 import { EmailService } from './email.service.js';
 import { PaginationParams, PaginatedResult } from '../interfaces/common.interface.js';
+import { escapeRegex } from '../utils/query.util.js';
 
 export class UserService {
   private userRepo = new UserRepository();
@@ -12,11 +13,12 @@ export class UserService {
   async getUsers(params: PaginationParams): Promise<PaginatedResult<IUserDocument>> {
     const filter: any = {};
     if (params.search) {
+      const s = escapeRegex(params.search);
       filter.$or = [
-        { name: { $regex: params.search, $options: 'i' } },
-        { email: { $regex: params.search, $options: 'i' } },
-        { department: { $regex: params.search, $options: 'i' } },
-        { designation: { $regex: params.search, $options: 'i' } },
+        { name: { $regex: s, $options: 'i' } },
+        { email: { $regex: s, $options: 'i' } },
+        { department: { $regex: s, $options: 'i' } },
+        { designation: { $regex: s, $options: 'i' } },
       ];
     }
     if (params.role) {

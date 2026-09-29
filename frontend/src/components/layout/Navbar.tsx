@@ -13,6 +13,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { NotificationItem } from '../../types';
 import { Link } from 'react-router-dom';
+import { FirmSwitcher } from '../firm/FirmSwitcher';
 
 export const Navbar: React.FC<{ sidebarCollapsed: boolean }> = ({ sidebarCollapsed }) => {
   const { user, logout } = useAuth();
@@ -55,6 +56,9 @@ export const Navbar: React.FC<{ sidebarCollapsed: boolean }> = ({ sidebarCollaps
         sidebarCollapsed ? 'left-20' : 'left-64'
       }`}
     >
+      {/* Firm scope switcher */}
+      <FirmSwitcher />
+
       {/* Global Quick Search */}
       <div className="relative w-72 hidden md:block">
         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />

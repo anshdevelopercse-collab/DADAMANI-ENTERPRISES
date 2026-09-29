@@ -15,6 +15,7 @@ import { Vehicle, VehicleAllocation } from '../../types';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable, Column } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { FirmBadge } from '../../components/firm/FirmBadge';
 import { VehicleFormModal } from './VehicleFormModal';
 import { Drawer } from '../../components/common/Drawer';
 import { EmptyState } from '../../components/common/EmptyState';
@@ -146,6 +147,7 @@ export const VehicleListPage: React.FC = () => {
           <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-sky-400 border border-slate-700">
             {row.vehicleType} • {row.capacityTonnes} MT
           </span>
+          <div className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">Owner <FirmBadge firm={row.ownerFirm} /></div>
         </div>
       ),
       width: '30%',

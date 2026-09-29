@@ -9,6 +9,15 @@ export const api = axios.create({
   },
 });
 
+/** Called by FirmContext to keep every request in sync with the active scope. */
+export function setApiFirmScope(scope: { kind: string; firmId?: string }) {
+  if (scope.kind === 'firm' && scope.firmId) {
+    api.defaults.headers.common['X-Firm-Scope'] = `firm:${scope.firmId}`;
+  } else {
+    delete api.defaults.headers.common['X-Firm-Scope'];
+  }
+}
+
 // Request interceptor: Inject Access Token
 api.interceptors.request.use(
   (config) => {

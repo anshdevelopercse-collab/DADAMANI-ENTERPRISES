@@ -6,6 +6,7 @@ interface Company {
   _id?: string;
   name: string;
   code: string;
+  isPrimary?: boolean;
   registrationNumber?: string;
   gstNumber?: string;
   panNumber?: string;
@@ -27,6 +28,7 @@ interface Props {
 const empty: Omit<Company, '_id'> = {
   name: '',
   code: '',
+  isPrimary: false,
   registrationNumber: '',
   gstNumber: '',
   panNumber: '',
@@ -164,12 +166,25 @@ export const CompanyFormModal: React.FC<Props> = ({ isOpen, onClose, onSaved, co
             <input required value={form.state} onChange={(e) => set('state', e.target.value)} className={inputCls} />
           </div>
 
-          <div className="col-span-2">
+          <div>
             <label className={labelCls}>Status</label>
             <select value={form.isActive ? 'true' : 'false'} onChange={(e) => set('isActive', e.target.value === 'true')} className={inputCls}>
               <option value="true">Active</option>
               <option value="false">Inactive</option>
             </select>
+          </div>
+
+          <div className="flex items-center gap-3 pt-1">
+            <input
+              id="company-primary"
+              type="checkbox"
+              checked={!!form.isPrimary}
+              onChange={(e) => set('isPrimary', e.target.checked)}
+              className="w-4 h-4 rounded accent-sky-500"
+            />
+            <label htmlFor="company-primary" className="text-xs text-slate-300 cursor-pointer">
+              Primary firm <span className="text-slate-500">(only one can be primary)</span>
+            </label>
           </div>
         </div>
       </form>

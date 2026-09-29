@@ -1,21 +1,24 @@
 import { VehicleRepository, DriverRepository } from '../repositories/index.js';
 import { IVehicleDocument, IDriverDocument } from '../interfaces/vehicle.interface.js';
 import { ApiError } from '../utils/api-response.util.js';
-import { PaginationParams, PaginatedResult } from '../interfaces/common.interface.js';
+import { PaginationParams, PaginatedResult, FirmScope } from '../interfaces/common.interface.js';
+import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { escapeRegex } from '../utils/query.util.js';
 
 export class VehicleService {
   private vehicleRepo = new VehicleRepository();
   private driverRepo = new DriverRepository();
 
-  async getVehicles(params: PaginationParams): Promise<PaginatedResult<IVehicleDocument>> {
-    const filter: any = {};
+  async getVehicles(params: PaginationParams, firmScope?: FirmScope): Promise<PaginatedResult<IVehicleDocument>> {
+    const filter: any = { ...buildFirmFilter(firmScope, 'homeEntity') };
     if (params.search) {
+      const s = escapeRegex(params.search);
       filter.$or = [
-        { registrationNumber: { $regex: params.search, $options: 'i' } },
-        { make: { $regex: params.search, $options: 'i' } },
-        { model: { $regex: params.search, $options: 'i' } },
-        { currentLocation: { $regex: params.search, $options: 'i' } },
-        { assignedProject: { $regex: params.search, $options: 'i' } },
+        { registrationNumber: { $regex: s, $options: 'i' } },
+        { make: { $regex: s, $options: 'i' } },
+        { model: { $regex: s, $options: 'i' } },
+        { currentLocation: { $regex: s, $options: 'i' } },
+        { assignedProject: { $regex: s, $options: 'i' } },
       ];
     }
     if (params.status) filter.status = params.status;
@@ -28,12 +31,13 @@ export class VehicleService {
     ]);
   }
 
-  async getVehicleById(id: string): Promise<IVehicleDocument> {
+  async getVehicleById(id: string, firmScope?: FirmScope): Promise<IVehicleDocument> {
     const vehicle = await this.vehicleRepo.findById(id, undefined, [
       { path: 'assignedDriver' },
       { path: 'createdBy', select: 'name email' },
     ]);
     if (!vehicle) throw ApiError.notFound('Vehicle not found');
+    assertFirmAccess((vehicle as any).homeEntity, firmScope);
     return vehicle;
   }
 
@@ -58,8 +62,8 @@ export class VehicleService {
     return vehicle;
   }
 
-  async updateVehicle(id: string, data: any): Promise<IVehicleDocument> {
-    const vehicle = await this.getVehicleById(id);
+  async updateVehicle(id: string, data: any, firmScope?: FirmScope): Promise<IVehicleDocument> {
+    const vehicle = await this.getVehicleById(id, firmScope);
 
     // Check driver re-assignment
     if (data.assignedDriver && data.assignedDriver !== vehicle.assignedDriver?._id?.toString()) {
@@ -129,8 +133,8 @@ export class VehicleService {
     return alerts.sort((a, b) => a.daysLeft - b.daysLeft);
   }
 
-  async deleteVehicle(id: string): Promise<void> {
-    await this.getVehicleById(id);
+  async deleteVehicle(id: string, firmScope?: FirmScope): Promise<void> {
+    await this.getVehicleById(id, firmScope);
     await this.vehicleRepo.deleteById(id);
   }
 
@@ -138,10 +142,11 @@ export class VehicleService {
   async getDrivers(params: PaginationParams): Promise<PaginatedResult<IDriverDocument>> {
     const filter: any = {};
     if (params.search) {
+      const s = escapeRegex(params.search);
       filter.$or = [
-        { name: { $regex: params.search, $options: 'i' } },
-        { licenseNumber: { $regex: params.search, $options: 'i' } },
-        { phone: { $regex: params.search, $options: 'i' } },
+        { name: { $regex: s, $options: 'i' } },
+        { licenseNumber: { $regex: s, $options: 'i' } },
+        { phone: { $regex: s, $options: 'i' } },
       ];
     }
     if (params.status) filter.status = params.status;

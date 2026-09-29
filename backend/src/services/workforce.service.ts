@@ -2,9 +2,11 @@ import { Workforce } from '../models/workforce.model.js';
 import { WorkforceAllocation } from '../models/workforce-allocation.model.js';
 import { WorkOrder } from '../models/work-order.model.js';
 import { ApiError } from '../utils/api-response.util.js';
-import { PaginationParams, PaginatedResult } from '../interfaces/common.interface.js';
+import { PaginationParams, PaginatedResult, FirmScope } from '../interfaces/common.interface.js';
 import { IWorkforceDocument, IWorkforceAllocationDocument } from '../interfaces/workforce.interface.js';
 import { Types } from 'mongoose';
+import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { escapeRegex } from '../utils/query.util.js';
 
 /**
  * Pure check, no I/O — kept standalone so it's unit-testable without a
@@ -27,13 +29,14 @@ export function isCrossEntityViolation(
 }
 
 export class WorkforceService {
-  async getWorkforce(params: PaginationParams & { type?: string }): Promise<PaginatedResult<IWorkforceDocument>> {
-    const filter: any = {};
+  async getWorkforce(params: PaginationParams & { type?: string }, firmScope?: FirmScope): Promise<PaginatedResult<IWorkforceDocument>> {
+    const filter: any = { ...buildFirmFilter(firmScope) };
     if (params.search) {
+      const s = escapeRegex(params.search);
       filter.$or = [
-        { name: { $regex: params.search, $options: 'i' } },
-        { phone: { $regex: params.search, $options: 'i' } },
-        { licenseNumber: { $regex: params.search, $options: 'i' } },
+        { name: { $regex: s, $options: 'i' } },
+        { phone: { $regex: s, $options: 'i' } },
+        { licenseNumber: { $regex: s, $options: 'i' } },
       ];
     }
     if (params.status) filter.status = params.status;
@@ -50,9 +53,10 @@ export class WorkforceService {
     return { data, pagination: { total, page, limit, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 } };
   }
 
-  async getById(id: string): Promise<IWorkforceDocument> {
+  async getById(id: string, firmScope?: FirmScope): Promise<IWorkforceDocument> {
     const workforce = await Workforce.findById(id);
     if (!workforce) throw ApiError.notFound('Workforce member not found');
+    assertFirmAccess((workforce as any).entity, firmScope);
     return workforce;
   }
 
@@ -65,15 +69,15 @@ export class WorkforceService {
     return Workforce.create({ ...data, createdBy: createdById });
   }
 
-  async update(id: string, data: any): Promise<IWorkforceDocument> {
+  async update(id: string, data: any, firmScope?: FirmScope): Promise<IWorkforceDocument> {
+    await this.getById(id, firmScope);
     const workforce = await Workforce.findByIdAndUpdate(id, data, { new: true });
     if (!workforce) throw ApiError.notFound('Workforce member not found');
     return workforce;
   }
 
-  async delete(id: string): Promise<void> {
-    const workforce = await Workforce.findById(id);
-    if (!workforce) throw ApiError.notFound('Workforce member not found');
+  async delete(id: string, firmScope?: FirmScope): Promise<void> {
+    await this.getById(id, firmScope);
     await Workforce.findByIdAndDelete(id);
   }
 

@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Vehicle } from '../../types';
+import { useFirm } from '../../contexts/FirmContext';
+import { FirmSelect } from '../../components/firm/FirmSelect';
+
+const firmIdOf = (f: any): string => (!f ? '' : typeof f === 'string' ? f : f._id);
 
 interface VehicleFormModalProps {
   isOpen: boolean;
@@ -16,6 +20,8 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
   onSuccess,
   vehicleToEdit,
 }) => {
+  const { defaultFirmId } = useFirm();
+  const [ownerFirm, setOwnerFirm] = useState('');
   const [drivers, setDrivers] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     registrationNumber: '',
@@ -43,6 +49,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
 
   useEffect(() => {
     fetchDrivers();
+    setOwnerFirm(vehicleToEdit ? firmIdOf(vehicleToEdit.ownerFirm) : defaultFirmId);
     if (vehicleToEdit) {
       setFormData({
         registrationNumber: vehicleToEdit.registrationNumber,
@@ -84,21 +91,29 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!vehicleToEdit && !ownerFirm) {
+      setError('Select the firm that owns this vehicle');
+      return;
+    }
     setLoading(true);
 
+    const docNo = (key: 'insurance' | 'fitness' | 'permit' | 'tax' | 'puc') =>
+      vehicleToEdit?.[key]?.documentNumber ?? '';
+
     try {
-      const payload = {
+      const payload: any = {
         ...formData,
         yearOfManufacture: Number(formData.yearOfManufacture),
         capacityTonnes: Number(formData.capacityTonnes),
         odometerKm: Number(formData.odometerKm),
         assignedDriver: formData.assignedDriver || undefined,
-        insurance: { expiryDate: formData.insuranceExpiry, documentNumber: 'INS-DOC' },
-        fitness: { expiryDate: formData.fitnessExpiry, documentNumber: 'FIT-DOC' },
-        permit: { expiryDate: formData.permitExpiry, documentNumber: 'PER-DOC' },
-        tax: { expiryDate: formData.taxExpiry, documentNumber: 'TAX-DOC' },
-        puc: { expiryDate: formData.pucExpiry, documentNumber: 'PUC-DOC' },
+        insurance: { expiryDate: formData.insuranceExpiry, documentNumber: docNo('insurance') },
+        fitness: { expiryDate: formData.fitnessExpiry, documentNumber: docNo('fitness') },
+        permit: { expiryDate: formData.permitExpiry, documentNumber: docNo('permit') },
+        tax: { expiryDate: formData.taxExpiry, documentNumber: docNo('tax') },
+        puc: { expiryDate: formData.pucExpiry, documentNumber: docNo('puc') },
       };
+      if (ownerFirm) payload.ownerFirm = ownerFirm;
 
       if (vehicleToEdit) {
         await api.put(`/vehicles/${vehicleToEdit._id}`, payload);
@@ -138,6 +153,13 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <FirmSelect
+            id="vehicle-owner-firm"
+            label="Owning firm"
+            value={ownerFirm}
+            onChange={setOwnerFirm}
+            hint="The firm that owns this vehicle. It can still be deployed on another firm's contract; each allocation records both firms."
+          />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">

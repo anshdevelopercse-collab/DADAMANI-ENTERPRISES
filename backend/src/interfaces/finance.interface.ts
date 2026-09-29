@@ -25,6 +25,7 @@ export interface IInvoice {
 export interface IInvoiceDocument extends IInvoice, Document {}
 
 export interface IContractAdvance {
+  entity?: Types.ObjectId;
   workOrder: Types.ObjectId;
   recipientType: AdvanceRecipientType;
   // Set when recipientType is Workforce or User; omitted for an External

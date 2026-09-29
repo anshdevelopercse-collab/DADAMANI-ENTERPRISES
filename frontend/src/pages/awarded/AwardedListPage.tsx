@@ -14,6 +14,7 @@ import { AwardedTender } from '../../types';
 import { PageHeader } from '../../components/common/PageHeader';
 import { DataTable, Column } from '../../components/common/DataTable';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { FirmBadge } from '../../components/firm/FirmBadge';
 import { AwardedFormModal } from './AwardedFormModal';
 
 export const AwardedListPage: React.FC = () => {
@@ -79,6 +80,7 @@ export const AwardedListPage: React.FC = () => {
   };
 
   const columns: Column<AwardedTender>[] = [
+    { header: 'Firm', cell: (row) => <FirmBadge firm={row.firm} /> },
     {
       header: 'Contract & Tender',
       cell: (row) => (

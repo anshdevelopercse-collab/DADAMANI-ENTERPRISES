@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { api } from '../../services/api';
 import { User } from '../../types';
+import { useFirm } from '../../contexts/FirmContext';
+import { FirmMultiSelect } from '../../components/firm/FirmSelect';
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -16,6 +18,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   onSuccess,
   userToEdit,
 }) => {
+  const { firms } = useFirm();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,8 +28,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     designation: 'Field Operations Lead',
     password: '',
   });
+  const [firmAccessMode, setFirmAccessMode] = useState<'All' | 'Restricted'>('All');
+  const [firmAccess, setFirmAccess] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const firmIdOf = (f: any): string => (!f ? '' : typeof f === 'string' ? f : f._id);
 
   useEffect(() => {
     if (userToEdit) {
@@ -39,6 +46,8 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         designation: userToEdit.designation || '',
         password: '',
       });
+      setFirmAccessMode(userToEdit.firmAccessMode || 'All');
+      setFirmAccess((userToEdit.firmAccess || []).map(firmIdOf));
     } else {
       setFormData({
         name: '',
@@ -49,6 +58,8 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         designation: 'Operations Lead',
         password: '',
       });
+      setFirmAccessMode('All');
+      setFirmAccess([]);
     }
   }, [userToEdit, isOpen]);
 
@@ -60,10 +71,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     setLoading(true);
 
     try {
+      const payload: any = { ...formData, firmAccessMode };
+      if (firmAccessMode === 'Restricted') payload.firmAccess = firmAccess;
       if (userToEdit) {
-        await api.put(`/users/${userToEdit._id}`, formData);
+        await api.put(`/users/${userToEdit._id}`, payload);
       } else {
-        await api.post('/users', formData);
+        await api.post('/users', payload);
       }
       onSuccess();
       onClose();
@@ -192,6 +205,42 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
                 placeholder="Leave blank to auto-generate"
               />
+            </div>
+          )}
+
+          {firms.length >= 2 && (
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
+              <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider">Firm Access</h4>
+              <div className="flex gap-2">
+                {(['All', 'Restricted'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setFirmAccessMode(mode)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                      firmAccessMode === mode
+                        ? 'bg-sky-600 border-sky-500 text-white'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {mode === 'All' ? 'All Firms' : 'Restricted'}
+                  </button>
+                ))}
+              </div>
+              {firmAccessMode === 'Restricted' && (
+                <FirmMultiSelect
+                  id="user-firm-access"
+                  label="Accessible firms"
+                  value={firmAccess}
+                  onChange={setFirmAccess}
+                  hint="User can only view data for the selected firms."
+                />
+              )}
+              {firmAccessMode === 'All' && (
+                <p className="text-[11px] text-slate-500">
+                  User can view and act on data across all firms.
+                </p>
+              )}
             </div>
           )}
 

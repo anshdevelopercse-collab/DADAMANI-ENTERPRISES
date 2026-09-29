@@ -11,6 +11,7 @@ import {
   requirePermission,
   requireRoles,
   uploadMiddleware,
+  resolveFirmScope,
 } from '../middlewares/index.js';
 import { PERMISSIONS } from '../constants/permissions.constant.js';
 import { UserRole } from '../constants/status.constant.js';
@@ -24,6 +25,7 @@ const memoryUpload = multer({
 // --- Import & Export Routes ---
 export const importExportRouter = Router();
 importExportRouter.use(authenticateJwt);
+importExportRouter.use(resolveFirmScope);
 importExportRouter.post('/inspect', requirePermission(PERMISSIONS.IMPORT_DATA), memoryUpload.single('file'), ImportExportController.inspect);
 importExportRouter.post('/preview', requirePermission(PERMISSIONS.IMPORT_DATA), memoryUpload.single('file'), ImportExportController.preview);
 importExportRouter.post('/execute', requirePermission(PERMISSIONS.IMPORT_DATA), memoryUpload.single('file'), ImportExportController.executeImport);
@@ -34,8 +36,10 @@ importExportRouter.get('/template/:type', requirePermission(PERMISSIONS.IMPORT_D
 // --- Documents Routes ---
 export const documentRouter = Router();
 documentRouter.use(authenticateJwt);
+documentRouter.use(resolveFirmScope);
 documentRouter.get('/', requirePermission(PERMISSIONS.DOCUMENT_READ), DocumentController.list);
 documentRouter.post('/upload', requirePermission(PERMISSIONS.DOCUMENT_UPLOAD), uploadMiddleware.single('file'), DocumentController.upload);
+documentRouter.get('/:id/download', requirePermission(PERMISSIONS.DOCUMENT_READ), DocumentController.download);
 documentRouter.get('/:id/versions', requirePermission(PERMISSIONS.DOCUMENT_READ), DocumentController.getVersionHistory);
 documentRouter.post('/:id/replace', requirePermission(PERMISSIONS.DOCUMENT_UPLOAD), uploadMiddleware.single('file'), DocumentController.replaceVersion);
 documentRouter.delete('/:id', requirePermission(PERMISSIONS.DOCUMENT_DELETE), DocumentController.delete);

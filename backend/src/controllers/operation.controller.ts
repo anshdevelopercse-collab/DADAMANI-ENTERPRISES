@@ -23,7 +23,7 @@ const getId = (id: any): string => (Array.isArray(id) ? id[0] : String(id));
 export class TenderController {
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await tenderService.getTenders(req.query as any);
+      const result = await tenderService.getTenders(req.query as any, req.firmScope);
       ApiResponse.success(res, 'Tenders retrieved', result.data, result.pagination);
     } catch (error) {
       next(error);
@@ -32,7 +32,7 @@ export class TenderController {
 
   static async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const tender = await tenderService.getTenderById(getId(req.params.id));
+      const tender = await tenderService.getTenderById(getId(req.params.id), req.firmScope);
       ApiResponse.success(res, 'Tender details retrieved', tender);
     } catch (error) {
       next(error);
@@ -41,7 +41,8 @@ export class TenderController {
 
   static async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const tender = await tenderService.createTender(req.body, req.user?._id.toString()!, req.user?.name!);
+      const entityId = req.body.entity || (req.firmScope?.kind === 'firm' ? req.firmScope.firmId : undefined);
+      const tender = await tenderService.createTender({ ...req.body, entity: entityId }, req.user?._id.toString()!, req.user?.name!);
       await logAudit(req, 'TENDERS', AuditAction.CREATE, `Created tender ${tender.tenderNumber}`, tender._id.toString());
       ApiResponse.created(res, 'Tender created successfully', tender);
     } catch (error) {
@@ -51,7 +52,7 @@ export class TenderController {
 
   static async update(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const tender = await tenderService.updateTender(getId(req.params.id), req.body, req.user?._id.toString()!, req.user?.name!);
+      const tender = await tenderService.updateTender(getId(req.params.id), req.body, req.user?._id.toString()!, req.user?.name!, req.firmScope);
       await logAudit(req, 'TENDERS', AuditAction.UPDATE, `Updated tender ${tender.tenderNumber}`, tender._id.toString());
       ApiResponse.success(res, 'Tender updated successfully', tender);
     } catch (error) {
@@ -61,7 +62,7 @@ export class TenderController {
 
   static async addComment(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const tender = await tenderService.addComment(getId(req.params.id), req.body.comment, req.user);
+      const tender = await tenderService.addComment(getId(req.params.id), req.body.comment, req.user, req.firmScope);
       ApiResponse.success(res, 'Comment added', tender);
     } catch (error) {
       next(error);
@@ -70,7 +71,7 @@ export class TenderController {
 
   static async archive(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const tender = await tenderService.archiveTender(getId(req.params.id), req.user?._id.toString()!, req.user?.name!);
+      const tender = await tenderService.archiveTender(getId(req.params.id), req.user?._id.toString()!, req.user?.name!, req.firmScope);
       await logAudit(req, 'TENDERS', AuditAction.ARCHIVE, `Archived tender ${tender.tenderNumber}`, tender._id.toString());
       ApiResponse.success(res, 'Tender archived', tender);
     } catch (error) {
@@ -80,7 +81,7 @@ export class TenderController {
 
   static async restore(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const tender = await tenderService.restoreTender(getId(req.params.id), req.user?._id.toString()!, req.user?.name!);
+      const tender = await tenderService.restoreTender(getId(req.params.id), req.user?._id.toString()!, req.user?.name!, req.firmScope);
       await logAudit(req, 'TENDERS', AuditAction.RESTORE, `Restored tender ${tender.tenderNumber}`, tender._id.toString());
       ApiResponse.success(res, 'Tender restored', tender);
     } catch (error) {
@@ -91,7 +92,7 @@ export class TenderController {
   static async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = getId(req.params.id);
-      await tenderService.deleteTender(id);
+      await tenderService.deleteTender(id, req.firmScope);
       await logAudit(req, 'TENDERS', AuditAction.DELETE, `Deleted tender with ID ${id}`, id);
       ApiResponse.success(res, 'Tender deleted permanently');
     } catch (error) {
@@ -104,7 +105,7 @@ export class TenderController {
 export class AwardedTenderController {
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await awardedService.getAwardedTenders(req.query as any);
+      const result = await awardedService.getAwardedTenders(req.query as any, req.firmScope);
       ApiResponse.success(res, 'Awarded tenders retrieved', result.data, result.pagination);
     } catch (error) {
       next(error);
@@ -113,7 +114,7 @@ export class AwardedTenderController {
 
   static async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const item = await awardedService.getAwardedTenderById(getId(req.params.id));
+      const item = await awardedService.getAwardedTenderById(getId(req.params.id), req.firmScope);
       ApiResponse.success(res, 'Awarded tender details retrieved', item);
     } catch (error) {
       next(error);
@@ -132,7 +133,7 @@ export class AwardedTenderController {
 
   static async update(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const item = await awardedService.updateAwardedTender(getId(req.params.id), req.body);
+      const item = await awardedService.updateAwardedTender(getId(req.params.id), req.body, req.firmScope);
       await logAudit(req, 'AWARDED', AuditAction.UPDATE, `Updated awarded contract ${item.contractNumber}`, item._id.toString());
       ApiResponse.success(res, 'Awarded contract updated', item);
     } catch (error) {
@@ -142,7 +143,7 @@ export class AwardedTenderController {
 
   static async approve(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const item = await awardedService.approveAwardedTender(getId(req.params.id), req.user?._id.toString()!);
+      const item = await awardedService.approveAwardedTender(getId(req.params.id), req.user?._id.toString()!, req.firmScope);
       await logAudit(req, 'AWARDED', AuditAction.UPDATE, `Approved contract ${item.contractNumber}`, item._id.toString());
       ApiResponse.success(res, 'Contract approved successfully', item);
     } catch (error) {
@@ -152,7 +153,7 @@ export class AwardedTenderController {
 
   static async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      await awardedService.deleteAwardedTender(getId(req.params.id));
+      await awardedService.deleteAwardedTender(getId(req.params.id), req.firmScope);
       await logAudit(req, 'AWARDED', AuditAction.DELETE, `Deleted awarded contract ID ${req.params.id}`);
       ApiResponse.success(res, 'Awarded contract deleted');
     } catch (error) {
@@ -165,7 +166,7 @@ export class AwardedTenderController {
 export class VehicleController {
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await vehicleService.getVehicles(req.query as any);
+      const result = await vehicleService.getVehicles(req.query as any, req.firmScope);
       ApiResponse.success(res, 'Vehicles retrieved', result.data, result.pagination);
     } catch (error) {
       next(error);
@@ -193,7 +194,7 @@ export class VehicleController {
 
   static async update(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const vehicle = await vehicleService.updateVehicle(getId(req.params.id), req.body);
+      const vehicle = await vehicleService.updateVehicle(getId(req.params.id), req.body, req.firmScope);
       await logAudit(req, 'VEHICLES', AuditAction.UPDATE, `Updated vehicle ${vehicle.registrationNumber}`, vehicle._id.toString());
       ApiResponse.success(res, 'Vehicle updated', vehicle);
     } catch (error) {
@@ -223,7 +224,7 @@ export class VehicleController {
 
   static async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      await vehicleService.deleteVehicle(getId(req.params.id));
+      await vehicleService.deleteVehicle(getId(req.params.id), req.firmScope);
       await logAudit(req, 'VEHICLES', AuditAction.DELETE, `Deleted vehicle ID ${req.params.id}`);
       ApiResponse.success(res, 'Vehicle deleted');
     } catch (error) {
@@ -255,7 +256,7 @@ export class VehicleController {
 export class WorkOrderController {
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await workOrderService.getWorkOrders(req.query as any);
+      const result = await workOrderService.getWorkOrders(req.query as any, req.firmScope);
       ApiResponse.success(res, 'Work orders retrieved', result.data, result.pagination);
     } catch (error) {
       next(error);
@@ -264,7 +265,7 @@ export class WorkOrderController {
 
   static async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const wo = await workOrderService.getWorkOrderById(getId(req.params.id));
+      const wo = await workOrderService.getWorkOrderById(getId(req.params.id), req.firmScope);
       ApiResponse.success(res, 'Work order details retrieved', wo);
     } catch (error) {
       next(error);
@@ -283,7 +284,7 @@ export class WorkOrderController {
 
   static async update(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const wo = await workOrderService.updateWorkOrder(getId(req.params.id), req.body, req.user?._id.toString());
+      const wo = await workOrderService.updateWorkOrder(getId(req.params.id), req.body, req.user?._id.toString(), req.firmScope);
       await logAudit(req, 'WORK_ORDERS', AuditAction.UPDATE, `Updated work order ${wo.orderNumber}`, wo._id.toString());
       ApiResponse.success(res, 'Work order updated', wo);
     } catch (error) {
@@ -294,7 +295,7 @@ export class WorkOrderController {
   static async updateMilestone(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { milestoneId, status, progressPercentage } = req.body;
-      const wo = await workOrderService.updateMilestone(getId(req.params.id), milestoneId, status, progressPercentage);
+      const wo = await workOrderService.updateMilestone(getId(req.params.id), milestoneId, status, progressPercentage, req.firmScope);
       ApiResponse.success(res, 'Milestone updated', wo);
     } catch (error) {
       next(error);
@@ -304,7 +305,7 @@ export class WorkOrderController {
   static async invoice(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { invoiceNumber, invoicedAmount, invoiceStatus } = req.body;
-      const wo = await workOrderService.generateInvoice(getId(req.params.id), invoiceNumber, invoicedAmount, invoiceStatus);
+      const wo = await workOrderService.generateInvoice(getId(req.params.id), invoiceNumber, invoicedAmount, invoiceStatus, req.firmScope);
       await logAudit(req, 'WORK_ORDERS', AuditAction.UPDATE, `Generated invoice ${invoiceNumber} for ${wo.orderNumber}`);
       ApiResponse.success(res, 'Work order invoiced', wo);
     } catch (error) {
@@ -314,7 +315,7 @@ export class WorkOrderController {
 
   static async addComment(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const wo = await workOrderService.addComment(getId(req.params.id), req.body.comment, req.user);
+      const wo = await workOrderService.addComment(getId(req.params.id), req.body.comment, req.user, req.firmScope);
       ApiResponse.success(res, 'Comment added', wo);
     } catch (error) {
       next(error);
@@ -323,7 +324,7 @@ export class WorkOrderController {
 
   static async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      await workOrderService.deleteWorkOrder(getId(req.params.id));
+      await workOrderService.deleteWorkOrder(getId(req.params.id), req.firmScope);
       await logAudit(req, 'WORK_ORDERS', AuditAction.DELETE, `Deleted work order ID ${req.params.id}`);
       ApiResponse.success(res, 'Work order deleted');
     } catch (error) {
@@ -396,9 +397,9 @@ export class UserController {
 
 // --- Dashboard Controller ---
 export class DashboardController {
-  static async getMetrics(_req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
+  static async getMetrics(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const metrics = await dashboardService.getDashboardMetrics();
+      const metrics = await dashboardService.getDashboardMetrics(req.firmScope);
       ApiResponse.success(res, 'Dashboard metrics retrieved', metrics);
     } catch (error) {
       next(error);

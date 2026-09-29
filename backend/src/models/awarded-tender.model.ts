@@ -19,6 +19,7 @@ const MilestoneSchema = new Schema(
 const AwardedTenderSchema = new Schema<IAwardedTenderDocument>(
   {
     tender: { type: Schema.Types.ObjectId, ref: 'Tender', required: true, index: true },
+    entity: { type: Schema.Types.ObjectId, ref: 'Company', index: true },
     tenderNumber: { type: String, required: true, index: true },
     clientName: { type: String, required: true },
     title: { type: String, required: true },

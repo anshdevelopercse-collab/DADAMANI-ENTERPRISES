@@ -1,8 +1,20 @@
+export interface FirmRef {
+  _id: string;
+  name: string;
+  code: string;
+  isPrimary?: boolean;
+}
+
+/** A firm field on a document — either a populated object or a bare ID string. */
+export type FirmField = FirmRef | string;
+
 export interface User {
   _id: string;
   name: string;
   email: string;
   role: 'Admin' | 'Manager' | 'Viewer';
+  firmAccessMode?: 'All' | 'Restricted';
+  firmAccess?: (FirmRef | string)[];
   customPermissions?: string[];
   // Full effective permission set computed server-side (see backend
   // utils/permissions.util.ts) — this is what the UI actually gates on now;
@@ -47,6 +59,7 @@ export interface ApiResponse<T> {
 
 export interface Tender {
   _id: string;
+  firm?: FirmField;
   tenderNumber: string;
   title: string;
   clientName: string;
@@ -86,6 +99,7 @@ export interface Tender {
 
 export interface AwardedTender {
   _id: string;
+  firm?: FirmField;
   tender: Tender | string;
   tenderNumber: string;
   clientName: string;
@@ -137,6 +151,7 @@ export interface MaintenanceRecord {
 
 export interface Vehicle {
   _id: string;
+  ownerFirm?: FirmField;
   registrationNumber: string;
   chassisNumber: string;
   engineNumber: string;
@@ -185,6 +200,7 @@ export interface Driver {
 
 export interface WorkOrder {
   _id: string;
+  firm?: FirmField;
   orderNumber: string;
   title: string;
   clientName: string;
@@ -253,6 +269,7 @@ export interface NotificationItem {
 
 export interface DocumentItem {
   _id: string;
+  firms?: (FirmRef | string)[];
   title: string;
   folder: string;
   category: string;
@@ -307,6 +324,7 @@ export interface Workforce {
   _id: string;
   name: string;
   type: 'Driver' | 'Operator' | 'Mechanic' | 'Supervisor' | 'Other';
+  firm?: FirmField;
   entity?: string;
   phone?: string;
   emergencyContact?: string;

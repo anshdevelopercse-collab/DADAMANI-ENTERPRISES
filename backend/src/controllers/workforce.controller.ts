@@ -11,7 +11,7 @@ const getId = (id: any): string => (Array.isArray(id) ? id[0] : String(id));
 export class WorkforceController {
   static async list(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const result = await workforceService.getWorkforce(req.query as any);
+      const result = await workforceService.getWorkforce(req.query as any, req.firmScope);
       ApiResponse.success(res, 'Workforce retrieved', result.data, result.pagination);
     } catch (error) {
       next(error);
@@ -20,7 +20,7 @@ export class WorkforceController {
 
   static async getById(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const workforce = await workforceService.getById(getId(req.params.id));
+      const workforce = await workforceService.getById(getId(req.params.id), req.firmScope);
       ApiResponse.success(res, 'Workforce member retrieved', workforce);
     } catch (error) {
       next(error);
@@ -39,7 +39,7 @@ export class WorkforceController {
 
   static async update(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const workforce = await workforceService.update(getId(req.params.id), req.body);
+      const workforce = await workforceService.update(getId(req.params.id), req.body, req.firmScope);
       await logAudit(req, 'VEHICLES', AuditAction.UPDATE, `Updated workforce member ${workforce.name}`, workforce._id.toString());
       ApiResponse.success(res, 'Workforce member updated', workforce);
     } catch (error) {
@@ -50,7 +50,7 @@ export class WorkforceController {
   static async delete(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = getId(req.params.id);
-      await workforceService.delete(id);
+      await workforceService.delete(id, req.firmScope);
       await logAudit(req, 'VEHICLES', AuditAction.DELETE, `Deleted workforce member ${id}`, id);
       ApiResponse.success(res, 'Workforce member deleted');
     } catch (error) {

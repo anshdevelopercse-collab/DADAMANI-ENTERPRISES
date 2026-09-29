@@ -3,16 +3,18 @@ import { AdvanceAdjustment } from '../models/advance-adjustment.model.js';
 import { Invoice } from '../models/invoice.model.js';
 import { WorkOrder } from '../models/work-order.model.js';
 import { ApiError } from '../utils/api-response.util.js';
-import { PaginationParams, PaginatedResult } from '../interfaces/common.interface.js';
+import { PaginationParams, PaginatedResult, FirmScope } from '../interfaces/common.interface.js';
 import { IContractAdvanceDocument, IAdvanceAdjustmentDocument } from '../interfaces/finance.interface.js';
 import { assertPositiveAmount, getRemainingAmount, validateAdjustmentAmount } from './finance-validation.util.js';
 import { runInTransaction } from '../utils/transaction.util.js';
+import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { escapeRegex } from '../utils/query.util.js';
 
 export class ContractAdvanceService {
-  async list(params: PaginationParams & { workOrder?: string }): Promise<PaginatedResult<IContractAdvanceDocument>> {
-    const filter: any = {};
+  async list(params: PaginationParams & { workOrder?: string }, firmScope?: FirmScope): Promise<PaginatedResult<IContractAdvanceDocument>> {
+    const filter: any = { ...buildFirmFilter(firmScope) };
     if (params.workOrder) filter.workOrder = params.workOrder;
-    if (params.search) filter.$or = [{ recipientName: { $regex: params.search, $options: 'i' } }, { reason: { $regex: params.search, $options: 'i' } }];
+    if (params.search) { const s = escapeRegex(params.search); filter.$or = [{ recipientName: { $regex: s, $options: 'i' } }, { reason: { $regex: s, $options: 'i' } }]; }
 
     const page = Math.max(1, Number(params.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(params.limit) || 20));
@@ -25,9 +27,10 @@ export class ContractAdvanceService {
     return { data, pagination: { total, page, limit, totalPages, hasNextPage: page < totalPages, hasPrevPage: page > 1 } };
   }
 
-  async getById(id: string): Promise<IContractAdvanceDocument> {
+  async getById(id: string, firmScope?: FirmScope): Promise<IContractAdvanceDocument> {
     const advance = await ContractAdvance.findById(id).populate('workOrder', 'orderNumber title clientName');
     if (!advance) throw ApiError.notFound('Contract advance not found');
+    assertFirmAccess((advance as any).entity, firmScope);
     return advance;
   }
 
@@ -38,6 +41,9 @@ export class ContractAdvanceService {
     const workOrder = await WorkOrder.findById(data.workOrder);
     if (!workOrder) throw ApiError.notFound('Work order (contract) not found');
 
+    // Inherit entity from parent work order — never from caller body.
+    const entity = (workOrder as any).entity ?? undefined;
+
     if (data.recipientType !== 'External' && !data.recipientRef) {
       throw ApiError.badRequest('recipientRef is required when recipientType is Workforce or User');
     }
@@ -45,7 +51,7 @@ export class ContractAdvanceService {
       throw ApiError.badRequest('recipientName is required so the advance recipient is always identifiable, even for a non-employee');
     }
 
-    return ContractAdvance.create({ ...data, createdBy: createdById });
+    return ContractAdvance.create({ ...data, createdBy: createdById, ...(entity ? { entity } : {}) });
   }
 
   async getAdjustments(advanceId: string): Promise<IAdvanceAdjustmentDocument[]> {
@@ -61,12 +67,31 @@ export class ContractAdvanceService {
    * stored field; it is always derived from amount - totalAdjusted).
    */
   async createAdjustment(advanceId: string, invoiceId: string, amountAdjusted: number, createdById: string, notes?: string): Promise<IAdvanceAdjustmentDocument> {
+    // Pre-flight checks outside the transaction so they are testable without a replica set.
+    const advancePre = await ContractAdvance.findById(advanceId);
+    if (!advancePre) throw ApiError.notFound('Contract advance not found');
+
+    const invoicePre = await Invoice.findById(invoiceId);
+    if (!invoicePre) throw ApiError.notFound('Invoice not found');
+
+    if (invoicePre.status === 'Cancelled') {
+      throw ApiError.badRequest('Cannot apply an adjustment to a cancelled invoice');
+    }
+
+    if (advancePre.workOrder.toString() !== invoicePre.workOrder.toString()) {
+      throw ApiError.badRequest('The advance and the invoice must belong to the same contract (Work Order)');
+    }
+
     return runInTransaction(async (session) => {
       const advance = await ContractAdvance.findById(advanceId).session(session);
       if (!advance) throw ApiError.notFound('Contract advance not found');
 
       const invoice = await Invoice.findById(invoiceId).session(session);
       if (!invoice) throw ApiError.notFound('Invoice not found');
+
+      if (invoice.status === 'Cancelled') {
+        throw ApiError.badRequest('Cannot apply an adjustment to a cancelled invoice');
+      }
 
       if (advance.workOrder.toString() !== invoice.workOrder.toString()) {
         throw ApiError.badRequest('The advance and the invoice must belong to the same contract (Work Order)');
@@ -93,9 +118,10 @@ export class ContractAdvanceService {
     });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, firmScope?: FirmScope): Promise<void> {
     const advance = await ContractAdvance.findById(id);
     if (!advance) throw ApiError.notFound('Contract advance not found');
+    assertFirmAccess((advance as any).entity, firmScope);
     if (advance.totalAdjusted > 0) {
       throw ApiError.badRequest('Cannot delete an advance that already has adjustments recorded against it — the ledger is immutable');
     }

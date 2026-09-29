@@ -27,6 +27,7 @@ export interface ITenderTimelineEvent {
 }
 
 export interface ITender {
+  entity?: Types.ObjectId;
   tenderNumber: string;
   title: string;
   clientName: string;
@@ -54,6 +55,7 @@ export interface ITender {
 export interface ITenderDocument extends ITender, Document {}
 
 export interface IAwardedTender {
+  entity?: Types.ObjectId;
   tender: Types.ObjectId;
   tenderNumber: string;
   clientName: string;

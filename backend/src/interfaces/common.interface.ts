@@ -37,7 +37,15 @@ export interface ApiResponsePayload<T = any> {
   timestamp: string;
 }
 
+export interface FirmScope {
+  kind: 'all' | 'firm';
+  firmId?: string;
+  /** For Restricted users requesting 'all': constrained to these firm IDs only */
+  allowedFirmIds?: string[];
+}
+
 export interface AuthenticatedRequest extends Request {
   user?: IUserDocument;
   token?: string;
+  firmScope?: FirmScope;
 }

@@ -13,6 +13,9 @@ import { AuthenticatedRequest } from '../interfaces/common.interface.js';
 // Re-export auth middlewares
 export * from './auth.middleware.js';
 
+// Re-export firm-scope middleware
+export * from './firm-scope.middleware.js';
+
 // --- Zod Validation Middleware ---
 export const validateBody = (schema: ZodSchema) => {
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {

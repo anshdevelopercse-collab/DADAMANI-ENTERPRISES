@@ -21,6 +21,7 @@ const DocumentSchema = new Schema<IDocumentRecordDocument>(
       index: true,
     },
     entityId: { type: Schema.Types.ObjectId },
+    firms: [{ type: Schema.Types.ObjectId, ref: 'Company' }],
     isArchived: { type: Boolean, default: false, index: true },
     parentDoc: { type: Schema.Types.ObjectId, ref: 'DocumentRecord', default: null, index: true },
     versionNumber: { type: Number, default: 1, min: 1 },

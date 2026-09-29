@@ -48,6 +48,7 @@ export interface IDocumentRecord {
   tags?: string[];
   entityType?: 'Tender' | 'Vehicle' | 'WorkOrder' | 'User' | 'Invoice' | 'ContractAdvance' | 'GemFee' | 'Workforce' | 'General';
   entityId?: Types.ObjectId;
+  firms?: Types.ObjectId[];
   isArchived: boolean;
   // Version history fields
   parentDoc?: Types.ObjectId; // null = original; non-null = this is a later version

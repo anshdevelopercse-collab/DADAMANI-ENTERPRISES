@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/common/Modal';
 import { api } from '../../services/api';
-import { Workforce } from '../../types';
+import { Workforce, FirmField } from '../../types';
+import { useFirm } from '../../contexts/FirmContext';
+import { FirmSelect } from '../../components/firm/FirmSelect';
+
+const firmIdOf = (firm: FirmField | undefined): string => (!firm ? '' : typeof firm === 'string' ? firm : firm._id);
 
 interface WorkforceFormModalProps {
   isOpen: boolean;
@@ -23,12 +27,15 @@ const emptyForm = {
 
 export const WorkforceFormModal: React.FC<WorkforceFormModalProps> = ({ isOpen, onClose, onSaved, workforceToEdit }) => {
   const isEdit = !!workforceToEdit;
+  const { defaultFirmId } = useFirm();
   const [form, setForm] = useState(emptyForm);
+  const [firm, setFirm] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
+      setFirm(workforceToEdit ? firmIdOf(workforceToEdit.firm) : defaultFirmId);
       if (workforceToEdit) {
         setForm({
           name: workforceToEdit.name,
@@ -49,14 +56,19 @@ export const WorkforceFormModal: React.FC<WorkforceFormModalProps> = ({ isOpen, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError(null);
+    if (!isEdit && !firm) {
+      setError('Select the firm this workforce member belongs to');
+      return;
+    }
+    setSaving(true);
     try {
       const payload: any = { ...form };
       if (!payload.licenseNumber) delete payload.licenseNumber;
       if (!payload.licenseExpiry) delete payload.licenseExpiry;
       if (payload.experienceYears) payload.experienceYears = Number(payload.experienceYears);
       else delete payload.experienceYears;
+      if (firm) payload.firm = firm;
 
       if (isEdit && workforceToEdit) {
         await api.put(`/workforce/${workforceToEdit._id}`, payload);
@@ -66,7 +78,7 @@ export const WorkforceFormModal: React.FC<WorkforceFormModalProps> = ({ isOpen, 
       onSaved();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save workforce member');
+      setError(err.response?.data?.message || err.message || 'Failed to save workforce member');
     } finally {
       setSaving(false);
     }
@@ -96,6 +108,14 @@ export const WorkforceFormModal: React.FC<WorkforceFormModalProps> = ({ isOpen, 
     >
       <form id="workforce-form" onSubmit={handleSubmit} className="space-y-4">
         {error && <div className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-lg px-3 py-2">{error}</div>}
+
+        <FirmSelect
+          id="workforce-firm"
+          label="Employing firm"
+          value={firm}
+          onChange={setFirm}
+          hint={isEdit && !firmIdOf(workforceToEdit?.firm) ? 'This record predates firm tracking. Selecting a firm assigns it permanently.' : undefined}
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">

@@ -17,6 +17,15 @@ import { logger } from '../config/logger.config.js';
 
 export const seedDatabase = async () => {
   try {
+    // SAFETY: never run destructive seed against Atlas / production
+    const mongoUri = process.env.MONGODB_URI ?? '';
+    const isAtlas = mongoUri.includes('mongodb.net') || mongoUri.includes('atlas');
+    const isProd = process.env.NODE_ENV === 'production';
+    if (isAtlas || isProd) {
+      logger.error('SEED BLOCKED: Attempted to run seed against Atlas or production environment. Aborting.');
+      process.exit(1);
+    }
+
     await connectDatabase();
     logger.info('Purging and seeding database with enterprise datasets...');
 
