@@ -18,9 +18,11 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/logs ./logs
-COPY --from=builder /app/uploads ./uploads
 
+# Create runtime directories for logs and uploaded documents
+RUN mkdir -p logs uploads
+
+ENV PORT=5000
 EXPOSE 5000
 
 CMD ["node", "dist/server.js"]
