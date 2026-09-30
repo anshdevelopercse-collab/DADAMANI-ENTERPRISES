@@ -1,40 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import {
   FileSpreadsheet,
-  Award,
   Truck,
   IndianRupee,
   ClipboardList,
   AlertTriangle,
-  TrendingUp,
   Clock,
-  ArrowUpRight,
   ShieldAlert,
   Plus,
   Upload,
 } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-} from 'recharts';
 import { api } from '../../services/api';
 import { StatCard } from '../../components/common/StatCard';
-import { StatusBadge } from '../../components/common/StatusBadge';
 import { Link } from 'react-router-dom';
 import { useFirm } from '../../contexts/FirmContext';
-import { FirmTotals } from '../../components/firm/FirmTotals';
 
 export const DashboardPage: React.FC = () => {
-  const { firms, activeFirm } = useFirm();
+  const { activeFirm } = useFirm();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -73,7 +55,7 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
-  const { cards, charts, recentActivity, upcomingExpiries, financialByFirm } = data;
+  const { cards, recentActivity, upcomingExpiries } = data;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -166,130 +148,6 @@ export const DashboardPage: React.FC = () => {
           colorScheme="amber"
         />
       </div>
-
-      {/* Analytics Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Monthly Revenue & Profit Chart */}
-        <div className="lg:col-span-2 glass-card rounded-2xl p-6 border border-slate-800 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                Revenue & Profit Trajectory
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">6-Month Operational Cashflow (₹ in Lakhs)</p>
-            </div>
-            <div className="flex items-center gap-4 text-xs font-medium">
-              <span className="flex items-center gap-1.5 text-sky-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-500" /> Revenue
-              </span>
-              <span className="flex items-center gap-1.5 text-emerald-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Gross Profit
-              </span>
-            </div>
-          </div>
-
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={charts.monthlyRevenue}>
-                <defs>
-                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0284c7" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#0284c7" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorProf" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="month" stroke="#475569" fontSize={12} tickLine={false} />
-                <YAxis stroke="#475569" fontSize={12} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0f172a',
-                    borderColor: '#1e293b',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                  }}
-                />
-                <Area type="monotone" dataKey="revenue" stroke="#0284c7" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
-                <Area type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorProf)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Tender Status Donut Chart */}
-        <div className="glass-card rounded-2xl p-6 border border-slate-800 shadow-xl flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-1">
-              Tender Pipeline Status
-            </h3>
-            <p className="text-xs text-slate-400">Distribution across bidding lifecycle</p>
-          </div>
-
-          <div className="h-52 my-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={charts.tenderStatusDistribution}
-                  innerRadius={55}
-                  outerRadius={75}
-                  paddingAngle={4}
-                  dataKey="value"
-                >
-                  {charts.tenderStatusDistribution.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="#0f172a" strokeWidth={2} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0f172a',
-                    borderColor: '#1e293b',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="space-y-1.5 border-t border-slate-800/80 pt-3 text-xs">
-            {charts.tenderStatusDistribution.map((item: any) => (
-              <div key={item.name} className="flex items-center justify-between text-slate-300">
-                <span className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                  {item.name}
-                </span>
-                <span className="font-semibold text-white">{item.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Per-Firm Financial Breakdown — only shown when portal manages 2+ firms */}
-      {firms.length >= 2 && financialByFirm && financialByFirm.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <FirmTotals
-            title="Revenue by Firm"
-            currency="₹"
-            rows={financialByFirm.map((f: any) => ({ firm: { _id: f.firmId, name: f.firmName, code: f.firmCode }, total: f.revenue }))}
-            combined={cards.totalRevenue}
-          />
-          <FirmTotals
-            title="Invoiced by Firm"
-            currency="₹"
-            rows={financialByFirm.map((f: any) => ({ firm: { _id: f.firmId, name: f.firmName, code: f.firmCode }, total: f.invoiced ?? f.invoices }))}
-            combined={financialByFirm.reduce((s: number, f: any) => s + (f.invoiced ?? f.invoices ?? 0), 0)}
-          />
-          <FirmTotals
-            title="Advances by Firm"
-            currency="₹"
-            rows={financialByFirm.map((f: any) => ({ firm: { _id: f.firmId, name: f.firmName, code: f.firmCode }, total: f.advances }))}
-            combined={financialByFirm.reduce((s: number, f: any) => s + (f.advances || 0), 0)}
-          />
-        </div>
-      )}
 
       {/* Bottom Row: Recent Audit Activity & Upcoming Fleet Expiries */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
