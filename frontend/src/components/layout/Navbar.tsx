@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ExternalLink,
   ChevronDown,
+  Menu,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
@@ -15,7 +16,12 @@ import { NotificationItem } from '../../types';
 import { Link } from 'react-router-dom';
 import { FirmSwitcher } from '../firm/FirmSwitcher';
 
-export const Navbar: React.FC<{ sidebarCollapsed: boolean }> = ({ sidebarCollapsed }) => {
+interface NavbarProps {
+  sidebarCollapsed: boolean;
+  onMobileMenuClick: () => void;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ sidebarCollapsed, onMobileMenuClick }) => {
   const { user, logout } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -24,7 +30,7 @@ export const Navbar: React.FC<{ sidebarCollapsed: boolean }> = ({ sidebarCollaps
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // Polling every 30s
+    const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -52,14 +58,25 @@ export const Navbar: React.FC<{ sidebarCollapsed: boolean }> = ({ sidebarCollaps
 
   return (
     <header
-      className={`h-16 fixed top-0 right-0 z-30 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 transition-all duration-300 flex items-center justify-between px-6 ${
-        sidebarCollapsed ? 'left-20' : 'left-64'
+      className={`h-16 fixed top-0 right-0 z-30 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 transition-all duration-300 flex items-center justify-between px-4 md:px-6 left-0 ${
+        sidebarCollapsed ? 'md:left-20' : 'md:left-64'
       }`}
     >
-      {/* Firm scope switcher */}
-      <FirmSwitcher />
+      <div className="flex items-center gap-3">
+        {/* Hamburger — mobile only */}
+        <button
+          onClick={onMobileMenuClick}
+          className="p-2 rounded-xl border border-slate-800 bg-slate-950/60 text-slate-300 hover:text-white hover:bg-slate-800 transition md:hidden"
+          aria-label="Open navigation"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
 
-      {/* Global Quick Search */}
+        {/* Firm scope switcher */}
+        <FirmSwitcher />
+      </div>
+
+      {/* Global Quick Search — hidden on mobile */}
       <div className="relative w-72 hidden md:block">
         <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
         <input
@@ -69,7 +86,7 @@ export const Navbar: React.FC<{ sidebarCollapsed: boolean }> = ({ sidebarCollaps
         />
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Notifications Dropdown */}
         <div className="relative">
           <button

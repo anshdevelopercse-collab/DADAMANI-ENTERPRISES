@@ -8,8 +8,8 @@ const Inner: React.FC<{ sidebarCollapsed: boolean }> = ({ sidebarCollapsed }) =>
   const { activeScope } = useFirm();
   return (
     <main
-      className={`flex-1 transition-all duration-300 pt-20 px-6 pb-12 ${
-        sidebarCollapsed ? 'ml-20' : 'ml-64'
+      className={`flex-1 transition-all duration-300 pt-20 px-4 md:px-6 pb-12 ml-0 ${
+        sidebarCollapsed ? 'md:ml-20' : 'md:ml-64'
       }`}
     >
       <div className="max-w-7xl mx-auto">
@@ -22,12 +22,21 @@ const Inner: React.FC<{ sidebarCollapsed: boolean }> = ({ sidebarCollapsed }) =>
 
 export const MainLayout: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <FirmProvider>
       <div className="min-h-screen bg-slate-950 flex flex-col">
-        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-        <Navbar sidebarCollapsed={sidebarCollapsed} />
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
+        />
+        <Navbar
+          sidebarCollapsed={sidebarCollapsed}
+          onMobileMenuClick={() => setMobileOpen(true)}
+        />
         <Inner sidebarCollapsed={sidebarCollapsed} />
       </div>
     </FirmProvider>

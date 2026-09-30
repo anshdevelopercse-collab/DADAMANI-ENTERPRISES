@@ -34,7 +34,7 @@ import { useFirm } from '../../contexts/FirmContext';
 import { FirmTotals } from '../../components/firm/FirmTotals';
 
 export const DashboardPage: React.FC = () => {
-  const { firms } = useFirm();
+  const { firms, activeFirm } = useFirm();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -85,7 +85,7 @@ export const DashboardPage: React.FC = () => {
             Operational Command Center
           </div>
           <h1 className="text-2xl font-black text-white tracking-tight font-sans">
-            Dada Mani Operations Hub
+            {activeFirm ? `${activeFirm.name} Operations Hub` : 'Dada Mani Operations Hub'}
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-2xl">
             Real-time telemetry across Tenders, Awarded Contracts, Fleet Compliance, and Mining/Logistics Work Orders.
