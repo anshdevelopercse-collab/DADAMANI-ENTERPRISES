@@ -59,6 +59,7 @@ export interface ApiResponse<T> {
 
 export interface Tender {
   _id: string;
+  entity?: FirmField;
   firm?: FirmField;
   tenderNumber: string;
   title: string;
@@ -151,6 +152,7 @@ export interface MaintenanceRecord {
 
 export interface Vehicle {
   _id: string;
+  homeEntity?: FirmField;
   ownerFirm?: FirmField;
   registrationNumber: string;
   chassisNumber: string;
@@ -200,6 +202,7 @@ export interface Driver {
 
 export interface WorkOrder {
   _id: string;
+  entity?: FirmField;
   firm?: FirmField;
   orderNumber: string;
   title: string;

@@ -41,6 +41,10 @@ export abstract class BaseRepository<T> {
     return this.model.updateOne(filter, update).exec();
   }
 
+  async updateMany(filter: FilterQuery<any>, update: UpdateQuery<any>): Promise<any> {
+    return this.model.updateMany(filter, update).exec();
+  }
+
   async deleteById(id: string): Promise<T | null> {
     return (await this.model.findByIdAndDelete(id).exec()) as unknown as T | null;
   }

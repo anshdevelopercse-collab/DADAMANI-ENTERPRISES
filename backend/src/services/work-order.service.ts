@@ -8,7 +8,7 @@ import { User } from '../models/user.model.js';
 import { WorkOrder } from '../models/work-order.model.js';
 import { VehicleAllocationService } from './vehicle-allocation.service.js';
 import { runInTransaction } from '../utils/transaction.util.js';
-import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { buildFirmFilter, assertFirmAccess, resolveFirmForUpdate } from '../middlewares/firm-scope.middleware.js';
 import { escapeRegex } from '../utils/query.util.js';
 
 export class WorkOrderService {
@@ -115,13 +115,16 @@ export class WorkOrderService {
     return wo;
   }
 
-  async updateWorkOrder(id: string, data: any, updatedById?: string, firmScope?: FirmScope): Promise<IWorkOrderDocument> {
+  async updateWorkOrder(id: string, input: any, updatedById?: string, firmScope?: FirmScope): Promise<IWorkOrderDocument> {
+    const { entity: requestedFirm, ...data } = input;
     if (data.status === WorkOrderStatus.COMPLETED && !data.actualEndDate) {
       data.actualEndDate = new Date();
       data.progressPercentage = 100;
     }
 
     const existing = await this.getWorkOrderById(id, firmScope);
+    const entity = await resolveFirmForUpdate((existing as any).entity, requestedFirm, firmScope);
+    if (entity) data.entity = entity;
 
     if (Array.isArray(data.assignedVehicles)) {
       const currentIds = (existing.assignedVehicles || []).map((v: any) => (v._id ? v._id.toString() : v.toString()));

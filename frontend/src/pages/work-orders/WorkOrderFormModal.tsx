@@ -47,7 +47,7 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
 
   useEffect(() => {
     fetchPrerequisites();
-    setFirm(orderToEdit ? firmIdOf(orderToEdit.firm) : defaultFirmId);
+    setFirm(orderToEdit ? firmIdOf(orderToEdit.entity ?? orderToEdit.firm) : defaultFirmId);
     if (orderToEdit) {
       setFormData({
         orderNumber: orderToEdit.orderNumber,
@@ -100,7 +100,7 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
         contractValue: Number(formData.contractValue),
         relatedTender: formData.relatedTender || undefined,
       };
-      if (firm) payload.firm = firm;
+      if (firm) payload.entity = firm;
 
       if (orderToEdit) {
         await api.put(`/work-orders/${orderToEdit._id}`, payload);
@@ -145,8 +145,8 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
             label="Contract firm"
             value={firm}
             onChange={(next) => { setFirm(next); setFormData((f) => ({ ...f, relatedTender: '' })); }}
-            hint={orderToEdit && !firmIdOf(orderToEdit.firm)
-              ? 'This contract predates firm tracking. Selecting a firm assigns it — and its existing invoices, advances and GEM fees — permanently.'
+            hint={orderToEdit && !firmIdOf(orderToEdit.entity ?? orderToEdit.firm)
+              ? 'This contract predates firm tracking. Selecting a firm assigns it permanently.'
               : undefined}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -509,6 +509,107 @@ describe('escapeRegex', () => {
   });
 });
 
+// ─── 10a. Firm assignment on create / update ────────────────────────────────
+
+import { resolveFirmForCreate, resolveFirmForUpdate } from '../middlewares/firm-scope.middleware';
+import { Vehicle } from '../models/vehicle.model';
+import { VehicleService } from '../services/vehicle.service';
+
+describe('Firm assignment on create and update', () => {
+  let firmA: string;
+  let firmB: string;
+  let inactive: string;
+  const companyBase = { email: 'f@test.invalid', phone: '1', address: 'a', city: 'c', state: 's' };
+
+  beforeAll(async () => {
+    await Company.deleteMany({ code: { $in: ['FA', 'FB', 'FX'] } });
+    firmA = (await Company.create({ ...companyBase, name: 'Firm A', code: 'FA' }))._id.toString();
+    firmB = (await Company.create({ ...companyBase, name: 'Firm B', code: 'FB' }))._id.toString();
+    inactive = (await Company.create({ ...companyBase, name: 'Dormant', code: 'FX', isActive: false }))._id.toString();
+  });
+
+  it('uses the requested firm for an all-firm user', async () => {
+    await expect(resolveFirmForCreate(firmB, { kind: 'all' })).resolves.toBe(firmB);
+  });
+
+  it('defaults to the firm being viewed', async () => {
+    await expect(resolveFirmForCreate(undefined, { kind: 'firm', firmId: firmA })).resolves.toBe(firmA);
+  });
+
+  it('rejects a firm outside the current view or the user\'s access', async () => {
+    await expect(resolveFirmForCreate(firmB, { kind: 'firm', firmId: firmA })).rejects.toMatchObject({ statusCode: 403 });
+    await expect(resolveFirmForCreate(firmB, { kind: 'all', allowedFirmIds: [firmA] })).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it('never leaves a restricted user\'s record without a firm', async () => {
+    await expect(resolveFirmForCreate(undefined, { kind: 'all', allowedFirmIds: [firmA] })).resolves.toBe(firmA);
+    await expect(resolveFirmForCreate(undefined, { kind: 'all', allowedFirmIds: [firmA, firmB] })).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('rejects malformed, unknown and inactive firms', async () => {
+    await expect(resolveFirmForCreate('not-an-id', { kind: 'all' })).rejects.toMatchObject({ statusCode: 400 });
+    await expect(resolveFirmForCreate(new mongoose.Types.ObjectId().toString(), { kind: 'all' })).rejects.toMatchObject({ statusCode: 400 });
+    await expect(resolveFirmForCreate(inactive, { kind: 'all' })).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it('lets a legacy record be assigned a firm once, then locks it', async () => {
+    await expect(resolveFirmForUpdate(undefined, firmA, { kind: 'all' })).resolves.toBe(firmA);
+    await expect(resolveFirmForUpdate(firmA, firmA, { kind: 'all' })).resolves.toBeUndefined();
+    await expect(resolveFirmForUpdate(firmA, firmB, { kind: 'all' })).rejects.toMatchObject({ statusCode: 409 });
+    await expect(resolveFirmForUpdate(firmA, undefined, { kind: 'all' })).resolves.toBeUndefined();
+  });
+
+  it('does not let a vehicle update move it to another firm', async () => {
+    const userId = new mongoose.Types.ObjectId();
+    const doc = { documentNumber: '', expiryDate: new Date('2030-01-01') };
+    const v = await Vehicle.create({
+      registrationNumber: 'FIRMLOCK1', chassisNumber: 'CH-FL1', engineNumber: 'EN-FL1', make: 'Tata', model: 'Signa',
+      yearOfManufacture: 2022, vehicleType: 'Trailer', fuelType: 'Diesel', capacityTonnes: 20, currentLocation: 'Yard',
+      insurance: doc, fitness: doc, permit: doc, tax: doc, puc: doc, homeEntity: firmA, createdBy: userId,
+    });
+    const svc = new VehicleService();
+    await expect(svc.updateVehicle(v._id.toString(), { homeEntity: firmB }, { kind: 'all' })).rejects.toMatchObject({ statusCode: 409 });
+    const renamed = await svc.updateVehicle(v._id.toString(), { currentLocation: 'Depot' }, { kind: 'all' });
+    expect((renamed as any).homeEntity.toString()).toBe(firmA);
+    expect(renamed.currentLocation).toBe('Depot');
+  });
+});
+
+// ─── 10b. Notifications ─────────────────────────────────────────────────────
+
+import { Notification } from '../models/notification.model';
+import { NotificationService } from '../services/system.services';
+
+describe('NotificationService read state', () => {
+  const alice = new mongoose.Types.ObjectId();
+  const bob = new mongoose.Types.ObjectId();
+  const base = { title: 'T', message: 'M' };
+
+  beforeEach(async () => {
+    await Notification.deleteMany({});
+    await Notification.create([
+      { ...base, recipient: alice },
+      { ...base, recipient: alice },
+      { ...base, recipient: null },
+      { ...base, recipient: bob },
+    ]);
+  });
+
+  it('marks every unread notification for the user, not just one', async () => {
+    await new NotificationService().markAllAsRead(alice.toString());
+    expect(await Notification.countDocuments({ isRead: false })).toBe(1);
+    expect(await Notification.countDocuments({ recipient: bob, isRead: false })).toBe(1);
+  });
+
+  it('refuses to mark another user\'s notification as read', async () => {
+    const bobs = await Notification.findOne({ recipient: bob });
+    await expect(new NotificationService().markAsRead(bobs!._id.toString(), alice.toString())).rejects.toMatchObject({ statusCode: 404 });
+    expect((await Notification.findById(bobs!._id))!.isRead).toBe(false);
+    await new NotificationService().markAsRead(bobs!._id.toString(), bob.toString());
+    expect((await Notification.findById(bobs!._id))!.isRead).toBe(true);
+  });
+});
+
 // ─── 10. Import firm authorization ──────────────────────────────────────────
 
 import { ImportExportService } from '../services/import-export.service';

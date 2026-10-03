@@ -2,7 +2,7 @@ import { VehicleRepository, DriverRepository } from '../repositories/index.js';
 import { IVehicleDocument, IDriverDocument } from '../interfaces/vehicle.interface.js';
 import { ApiError } from '../utils/api-response.util.js';
 import { PaginationParams, PaginatedResult, FirmScope } from '../interfaces/common.interface.js';
-import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { buildFirmFilter, assertFirmAccess, resolveFirmForUpdate } from '../middlewares/firm-scope.middleware.js';
 import { escapeRegex } from '../utils/query.util.js';
 
 export class VehicleService {
@@ -62,8 +62,11 @@ export class VehicleService {
     return vehicle;
   }
 
-  async updateVehicle(id: string, data: any, firmScope?: FirmScope): Promise<IVehicleDocument> {
+  async updateVehicle(id: string, input: any, firmScope?: FirmScope): Promise<IVehicleDocument> {
     const vehicle = await this.getVehicleById(id, firmScope);
+    const { homeEntity: requestedFirm, ...data } = input;
+    const homeEntity = await resolveFirmForUpdate((vehicle as any).homeEntity, requestedFirm, firmScope);
+    if (homeEntity) data.homeEntity = homeEntity;
 
     // Check driver re-assignment
     if (data.assignedDriver && data.assignedDriver !== vehicle.assignedDriver?._id?.toString()) {

@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../interfaces/common.interface.js';
 import { ApiResponse } from '../utils/api-response.util.js';
 import { WorkforceService } from '../services/workforce.service.js';
 import { logAudit } from '../middlewares/index.js';
+import { resolveFirmForCreate } from '../middlewares/firm-scope.middleware.js';
 import { AuditAction } from '../constants/status.constant.js';
 
 const workforceService = new WorkforceService();
@@ -29,7 +30,8 @@ export class WorkforceController {
 
   static async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const workforce = await workforceService.create(req.body, req.user?._id.toString()!);
+      const entity = await resolveFirmForCreate(req.body.entity, req.firmScope);
+      const workforce = await workforceService.create({ ...req.body, entity }, req.user?._id.toString()!);
       await logAudit(req, 'VEHICLES', AuditAction.CREATE, `Added workforce member ${workforce.name} (${workforce.type})`, workforce._id.toString());
       ApiResponse.created(res, 'Workforce member created', workforce);
     } catch (error) {

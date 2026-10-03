@@ -63,6 +63,7 @@ export const VehicleCreateSchema = z.object({
   tax: ComplianceDocValidator,
   puc: ComplianceDocValidator,
   notes: z.string().optional(),
+  homeEntity: z.string().optional(),
 });
 
 export const WorkOrderCreateSchema = z.object({
@@ -82,6 +83,7 @@ export const WorkOrderCreateSchema = z.object({
   contractValue: z.number().min(0),
   scopeDetails: z.string().optional(),
   progressPercentage: z.number().min(0).max(100).default(0),
+  entity: z.string().optional(),
 });
 
 // --- Vehicle Allocation ---

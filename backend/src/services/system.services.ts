@@ -1,4 +1,5 @@
 import path from 'path';
+import mongoose from 'mongoose';
 import {
   DocumentRecordRepository,
   NotificationRepository,
@@ -181,8 +182,13 @@ export class NotificationService {
     return { notifications, unreadCount };
   }
 
-  async markAsRead(id: string): Promise<void> {
-    await this.notifRepo.updateById(id, { isRead: true });
+  async markAsRead(id: string, userId?: string): Promise<void> {
+    if (!mongoose.isValidObjectId(id)) throw ApiError.notFound('Notification not found');
+    const result = await this.notifRepo.updateOne(
+      { _id: id, $or: [{ recipient: userId }, { recipient: null }] },
+      { $set: { isRead: true } }
+    );
+    if (!result.matchedCount) throw ApiError.notFound('Notification not found');
   }
 
   async markAllAsRead(userId?: string): Promise<void> {
@@ -190,7 +196,7 @@ export class NotificationService {
       $or: [{ recipient: userId }, { recipient: null }],
       isRead: false,
     };
-    await this.notifRepo.updateOne(filter, { $set: { isRead: true } });
+    await this.notifRepo.updateMany(filter, { $set: { isRead: true } });
   }
 
   async createNotification(

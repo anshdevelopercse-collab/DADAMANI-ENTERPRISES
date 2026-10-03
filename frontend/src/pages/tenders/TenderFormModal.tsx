@@ -41,7 +41,7 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
 
   useEffect(() => {
     if (tenderToEdit) {
-      setFirm(firmIdOf(tenderToEdit.firm));
+      setFirm(firmIdOf(tenderToEdit.entity ?? tenderToEdit.firm));
       setFormData({
         tenderNumber: tenderToEdit.tenderNumber,
         title: tenderToEdit.title,
@@ -92,7 +92,7 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
         estimatedValue: Number(formData.estimatedValue),
         earnestMoneyDeposit: Number(formData.earnestMoneyDeposit || 0),
       };
-      if (firm) payload.firm = firm;
+      if (firm) payload.entity = firm;
 
       if (tenderToEdit) {
         await api.put(`/tenders/${tenderToEdit._id}`, payload);
@@ -137,7 +137,7 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
             label="Bidding firm"
             value={firm}
             onChange={setFirm}
-            hint={tenderToEdit && !firmIdOf(tenderToEdit.firm) ? 'This tender predates firm tracking. Selecting a firm assigns it permanently.' : undefined}
+            hint={tenderToEdit && !firmIdOf(tenderToEdit.entity ?? tenderToEdit.firm) ? 'This tender predates firm tracking. Selecting a firm assigns it permanently.' : undefined}
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

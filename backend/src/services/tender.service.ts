@@ -5,7 +5,7 @@ import { PaginationParams, PaginatedResult, FirmScope } from '../interfaces/comm
 import { TenderStatus } from '../constants/status.constant.js';
 import { EmailService } from './email.service.js';
 import { User } from '../models/user.model.js';
-import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { buildFirmFilter, assertFirmAccess, resolveFirmForUpdate } from '../middlewares/firm-scope.middleware.js';
 import { escapeRegex } from '../utils/query.util.js';
 
 export class TenderService {
@@ -97,8 +97,11 @@ export class TenderService {
     return tender;
   }
 
-  async updateTender(id: string, data: any, userId: string, userName: string, firmScope?: FirmScope): Promise<ITenderDocument> {
+  async updateTender(id: string, input: any, userId: string, userName: string, firmScope?: FirmScope): Promise<ITenderDocument> {
     const tender = await this.getTenderById(id, firmScope);
+    const { entity: requestedFirm, ...data } = input;
+    const entity = await resolveFirmForUpdate((tender as any).entity, requestedFirm, firmScope);
+    if (entity) data.entity = entity;
 
     const timelineEvent = {
       action: 'Tender Updated',

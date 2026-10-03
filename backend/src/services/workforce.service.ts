@@ -5,7 +5,7 @@ import { ApiError } from '../utils/api-response.util.js';
 import { PaginationParams, PaginatedResult, FirmScope } from '../interfaces/common.interface.js';
 import { IWorkforceDocument, IWorkforceAllocationDocument } from '../interfaces/workforce.interface.js';
 import { Types } from 'mongoose';
-import { buildFirmFilter, assertFirmAccess } from '../middlewares/firm-scope.middleware.js';
+import { buildFirmFilter, assertFirmAccess, resolveFirmForUpdate } from '../middlewares/firm-scope.middleware.js';
 import { escapeRegex } from '../utils/query.util.js';
 
 /**
@@ -69,8 +69,11 @@ export class WorkforceService {
     return Workforce.create({ ...data, createdBy: createdById });
   }
 
-  async update(id: string, data: any, firmScope?: FirmScope): Promise<IWorkforceDocument> {
-    await this.getById(id, firmScope);
+  async update(id: string, input: any, firmScope?: FirmScope): Promise<IWorkforceDocument> {
+    const current = await this.getById(id, firmScope);
+    const { entity: requestedFirm, ...data } = input;
+    const entity = await resolveFirmForUpdate((current as any).entity, requestedFirm, firmScope);
+    if (entity) data.entity = entity;
     const workforce = await Workforce.findByIdAndUpdate(id, data, { new: true });
     if (!workforce) throw ApiError.notFound('Workforce member not found');
     return workforce;

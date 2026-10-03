@@ -1,6 +1,8 @@
 import { Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import { AuthenticatedRequest, FirmScope } from '../interfaces/common.interface.js';
 import { ApiError } from '../utils/api-response.util.js';
+import { Company } from '../models/company.model.js';
 
 /**
  * Resolves the active firm scope for a request.
@@ -92,6 +94,57 @@ export function buildFirmFilter(firmScope: FirmScope | undefined, field = 'entit
   }
 
   return {};
+}
+
+async function assertAssignableFirm(firmId: string, firmScope: FirmScope | undefined): Promise<void> {
+  if (!mongoose.isValidObjectId(firmId)) {
+    throw ApiError.badRequest('Invalid firm id.');
+  }
+  if (firmScope?.kind === 'firm' && firmScope.firmId !== firmId) {
+    throw ApiError.forbidden('Records can only be created for the firm you are currently viewing.');
+  }
+  if (firmScope?.kind === 'all' && firmScope.allowedFirmIds?.length && !firmScope.allowedFirmIds.includes(firmId)) {
+    throw ApiError.forbidden('You do not have access to this firm.');
+  }
+  if (!(await Company.exists({ _id: firmId, isActive: true }))) {
+    throw ApiError.badRequest('Unknown or inactive firm.');
+  }
+}
+
+/**
+ * Decides which firm a new record belongs to. A requested firm must be inside
+ * the caller's scope; otherwise the firm being viewed is used. Restricted users
+ * must always end up with a firm so their records never become unscoped.
+ */
+export async function resolveFirmForCreate(requested: unknown, firmScope: FirmScope | undefined): Promise<string | undefined> {
+  let firmId = typeof requested === 'string' && requested ? requested : undefined;
+  if (!firmId && firmScope?.kind === 'firm') firmId = firmScope.firmId;
+  if (!firmId && firmScope?.kind === 'all' && firmScope.allowedFirmIds?.length) {
+    if (firmScope.allowedFirmIds.length > 1) {
+      throw ApiError.badRequest('Select the firm this record belongs to.');
+    }
+    firmId = firmScope.allowedFirmIds[0];
+  }
+  if (!firmId) return undefined;
+  await assertAssignableFirm(firmId, firmScope);
+  return firmId;
+}
+
+/**
+ * Firm ownership is fixed once set. A legacy record without a firm may be
+ * assigned one (within the caller's scope); any other change is rejected.
+ * Returns the firm to write, or undefined to leave the field untouched.
+ */
+export async function resolveFirmForUpdate(current: unknown, requested: unknown, firmScope: FirmScope | undefined): Promise<string | undefined> {
+  if (requested === undefined || requested === null || requested === '') return undefined;
+  const next = String(requested);
+  const existing = (current as any)?._id?.toString?.() ?? (current as any)?.toString?.() ?? null;
+  if (existing) {
+    if (existing === next) return undefined;
+    throw ApiError.conflict("A record's firm cannot be changed once it is set.");
+  }
+  await assertAssignableFirm(next, firmScope);
+  return next;
 }
 
 /**

@@ -49,7 +49,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
 
   useEffect(() => {
     fetchDrivers();
-    setOwnerFirm(vehicleToEdit ? firmIdOf(vehicleToEdit.ownerFirm) : defaultFirmId);
+    setOwnerFirm(vehicleToEdit ? firmIdOf(vehicleToEdit.homeEntity ?? vehicleToEdit.ownerFirm) : defaultFirmId);
     if (vehicleToEdit) {
       setFormData({
         registrationNumber: vehicleToEdit.registrationNumber,
@@ -113,7 +113,7 @@ export const VehicleFormModal: React.FC<VehicleFormModalProps> = ({
         tax: { expiryDate: formData.taxExpiry, documentNumber: docNo('tax') },
         puc: { expiryDate: formData.pucExpiry, documentNumber: docNo('puc') },
       };
-      if (ownerFirm) payload.ownerFirm = ownerFirm;
+      if (ownerFirm) payload.homeEntity = ownerFirm;
 
       if (vehicleToEdit) {
         await api.put(`/vehicles/${vehicleToEdit._id}`, payload);

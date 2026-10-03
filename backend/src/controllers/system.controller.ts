@@ -292,7 +292,7 @@ export class NotificationController {
 
   static async markRead(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      await notificationService.markAsRead(getId(req.params.id));
+      await notificationService.markAsRead(getId(req.params.id), req.user?._id.toString());
       ApiResponse.success(res, 'Notification marked as read');
     } catch (error) {
       next(error);

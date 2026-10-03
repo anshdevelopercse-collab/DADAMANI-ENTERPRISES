@@ -35,7 +35,7 @@ export const WorkforceFormModal: React.FC<WorkforceFormModalProps> = ({ isOpen, 
 
   useEffect(() => {
     if (isOpen) {
-      setFirm(workforceToEdit ? firmIdOf(workforceToEdit.firm) : defaultFirmId);
+      setFirm(workforceToEdit ? firmIdOf(workforceToEdit.entity ?? workforceToEdit.firm) : defaultFirmId);
       if (workforceToEdit) {
         setForm({
           name: workforceToEdit.name,
@@ -68,7 +68,7 @@ export const WorkforceFormModal: React.FC<WorkforceFormModalProps> = ({ isOpen, 
       if (!payload.licenseExpiry) delete payload.licenseExpiry;
       if (payload.experienceYears) payload.experienceYears = Number(payload.experienceYears);
       else delete payload.experienceYears;
-      if (firm) payload.firm = firm;
+      if (firm) payload.entity = firm;
 
       if (isEdit && workforceToEdit) {
         await api.put(`/workforce/${workforceToEdit._id}`, payload);
@@ -114,7 +114,7 @@ export const WorkforceFormModal: React.FC<WorkforceFormModalProps> = ({ isOpen, 
           label="Employing firm"
           value={firm}
           onChange={setFirm}
-          hint={isEdit && !firmIdOf(workforceToEdit?.firm) ? 'This record predates firm tracking. Selecting a firm assigns it permanently.' : undefined}
+          hint={isEdit && !firmIdOf(workforceToEdit?.entity ?? workforceToEdit?.firm) ? 'This record predates firm tracking. Selecting a firm assigns it permanently.' : undefined}
         />
 
         <div className="grid grid-cols-2 gap-4">

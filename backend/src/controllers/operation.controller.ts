@@ -8,6 +8,7 @@ import { WorkOrderService } from '../services/work-order.service.js';
 import { UserService } from '../services/user.service.js';
 import { DashboardService } from '../services/dashboard.service.js';
 import { logAudit } from '../middlewares/index.js';
+import { resolveFirmForCreate } from '../middlewares/firm-scope.middleware.js';
 import { AuditAction } from '../constants/status.constant.js';
 
 const tenderService = new TenderService();
@@ -41,7 +42,7 @@ export class TenderController {
 
   static async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const entityId = req.body.entity || (req.firmScope?.kind === 'firm' ? req.firmScope.firmId : undefined);
+      const entityId = await resolveFirmForCreate(req.body.entity, req.firmScope);
       const tender = await tenderService.createTender({ ...req.body, entity: entityId }, req.user?._id.toString()!, req.user?.name!);
       await logAudit(req, 'TENDERS', AuditAction.CREATE, `Created tender ${tender.tenderNumber}`, tender._id.toString());
       ApiResponse.created(res, 'Tender created successfully', tender);
@@ -184,7 +185,8 @@ export class VehicleController {
 
   static async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const vehicle = await vehicleService.createVehicle(req.body, req.user?._id.toString()!);
+      const homeEntity = await resolveFirmForCreate(req.body.homeEntity, req.firmScope);
+      const vehicle = await vehicleService.createVehicle({ ...req.body, homeEntity }, req.user?._id.toString()!);
       await logAudit(req, 'VEHICLES', AuditAction.CREATE, `Added vehicle ${vehicle.registrationNumber}`, vehicle._id.toString());
       ApiResponse.created(res, 'Vehicle registered successfully', vehicle);
     } catch (error) {
@@ -274,7 +276,8 @@ export class WorkOrderController {
 
   static async create(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const wo = await workOrderService.createWorkOrder(req.body, req.user?._id.toString()!);
+      const entity = await resolveFirmForCreate(req.body.entity, req.firmScope);
+      const wo = await workOrderService.createWorkOrder({ ...req.body, entity }, req.user?._id.toString()!);
       await logAudit(req, 'WORK_ORDERS', AuditAction.CREATE, `Created work order ${wo.orderNumber}`, wo._id.toString());
       ApiResponse.created(res, 'Work order created', wo);
     } catch (error) {
