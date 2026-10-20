@@ -109,9 +109,16 @@ export const TenderDetailPage: React.FC = () => {
           <p className="text-sm font-bold text-emerald-400 mt-1">
             {formatCurrency(tender.estimatedValue)}
           </p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            EMD: {formatCurrency(tender.earnestMoneyDeposit || 0)}
-          </p>
+          {tender.sliceConfig?.enabled ? (
+            <p className="text-xs text-slate-400 mt-0.5">
+              {tender.sliceConfig.count} slice{tender.sliceConfig.count !== 1 ? 's' : ''}:{' '}
+              {tender.sliceConfig.amounts?.map((a) => formatCurrency(a)).join(', ')}
+            </p>
+          ) : tender.earnestMoneyDeposit ? (
+            <p className="text-xs text-slate-400 mt-0.5">
+              EMD: {formatCurrency(tender.earnestMoneyDeposit)}
+            </p>
+          ) : null}
         </div>
 
         <div className="glass-card rounded-xl p-4 border border-slate-800">
@@ -138,6 +145,71 @@ export const TenderDetailPage: React.FC = () => {
           <p className="text-xs text-slate-400 mt-0.5">{tender.state || 'Odisha'}</p>
         </div>
       </div>
+
+      {/* Quoted Amount — Submitted */}
+      {tender.status === 'Submitted' && tender.quotedAmount != null && (
+        <div className="glass-card rounded-xl p-4 border border-sky-800/40 bg-sky-500/5">
+          <span className="text-[11px] uppercase tracking-wider text-sky-400 font-semibold">
+            Quoted Amount
+          </span>
+          <p className="text-lg font-bold text-sky-300 mt-1">
+            {formatCurrency(tender.quotedAmount)}
+          </p>
+        </div>
+      )}
+
+      {/* Award Details — Awarded */}
+      {tender.status === 'Awarded' && (tender.awardedTo || tender.awardedAmount != null) && (
+        <div className="glass-card rounded-2xl p-6 border border-emerald-800/40 bg-emerald-500/5">
+          <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-wider mb-3">
+            Award Details
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {tender.awardedTo && (
+              <div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                  Awarded To
+                </span>
+                <p className="text-sm font-bold text-white mt-1">{tender.awardedTo}</p>
+              </div>
+            )}
+            {tender.awardedAmount != null && (
+              <div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                  Awarded Amount
+                </span>
+                <p className="text-sm font-bold text-emerald-400 mt-1">
+                  {formatCurrency(tender.awardedAmount)}
+                </p>
+              </div>
+            )}
+            {tender.awardSliceConfig?.enabled && (
+              <div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                  Award Slices
+                </span>
+                <p className="text-xs text-slate-300 mt-1">
+                  {tender.awardSliceConfig.count} slice
+                  {tender.awardSliceConfig.count !== 1 ? 's' : ''}:{' '}
+                  {tender.awardSliceConfig.amounts?.map((a) => formatCurrency(a)).join(', ')}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Reason — Rejected */}
+      {tender.status === 'Rejected' && tender.rejectionReason && (
+        <div className="glass-card rounded-2xl p-6 border border-rose-800/40 bg-rose-500/5">
+          <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider mb-2">
+            Rejection Reason
+          </h3>
+          <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+            {tender.rejectionReason}
+          </p>
+        </div>
+      )}
 
       {/* Scope & Specifications */}
       <div className="glass-card rounded-2xl p-6 border border-slate-800 shadow-xl">

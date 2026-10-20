@@ -57,6 +57,12 @@ export interface ApiResponse<T> {
   };
 }
 
+export interface SliceConfig {
+  enabled: boolean;
+  count: number;
+  amounts: number[];
+}
+
 export interface Tender {
   _id: string;
   entity?: FirmField;
@@ -68,12 +74,18 @@ export interface Tender {
   category: string;
   estimatedValue: number;
   earnestMoneyDeposit?: number;
+  sliceConfig?: SliceConfig;
   submissionDeadline: string;
   openingDate?: string;
   status: 'Draft' | 'Submitted' | 'Awarded' | 'Rejected' | 'Cancelled';
   location: string;
   state?: string;
   scopeOfWork?: string;
+  quotedAmount?: number;
+  awardedTo?: string;
+  awardedAmount?: number;
+  awardSliceConfig?: SliceConfig;
+  rejectionReason?: string;
   assignedManager?: {
     _id: string;
     name: string;

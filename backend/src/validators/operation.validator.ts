@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { TenderStatus, VehicleStatus, FuelType, WorkOrderStatus } from '../constants/status.constant.js';
 
+const SliceConfigSchema = z.object({
+  enabled: z.boolean(),
+  count: z.number().int().min(0),
+  amounts: z.array(z.number().min(0)),
+}).optional();
+
 export const TenderCreateSchema = z.object({
   tenderNumber: z.string().min(3, 'Tender number is required'),
   title: z.string().min(3, 'Title is required'),
@@ -9,12 +15,18 @@ export const TenderCreateSchema = z.object({
   category: z.enum(['Logistics', 'Mining', 'Construction', 'Transport', 'Infrastructure', 'Government Supplies', 'Other']).default('Logistics'),
   estimatedValue: z.number().min(0, 'Estimated value must be non-negative'),
   earnestMoneyDeposit: z.number().min(0).optional(),
+  sliceConfig: SliceConfigSchema,
   submissionDeadline: z.string().or(z.date()),
   openingDate: z.string().or(z.date()).optional(),
   status: z.enum([TenderStatus.DRAFT, TenderStatus.SUBMITTED, TenderStatus.AWARDED, TenderStatus.REJECTED, TenderStatus.CANCELLED]).default(TenderStatus.DRAFT),
   location: z.string().min(2, 'Location is required'),
   state: z.string().optional(),
   scopeOfWork: z.string().optional(),
+  quotedAmount: z.number().min(0).optional(),
+  awardedTo: z.string().optional(),
+  awardedAmount: z.number().min(0).optional(),
+  awardSliceConfig: SliceConfigSchema,
+  rejectionReason: z.string().optional(),
   assignedManager: z.string().optional(),
   entity: z.string().optional(),
 });

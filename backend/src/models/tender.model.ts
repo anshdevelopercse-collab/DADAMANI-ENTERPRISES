@@ -34,6 +34,15 @@ const TenderTimelineSchema = new Schema(
   { _id: false }
 );
 
+const SliceConfigSchema = new Schema(
+  {
+    enabled: { type: Boolean, default: false },
+    count: { type: Number, default: 0, min: 0 },
+    amounts: [{ type: Number, min: 0 }],
+  },
+  { _id: false }
+);
+
 const TenderSchema = new Schema<ITenderDocument>(
   {
     tenderNumber: { type: String, required: true, unique: true, uppercase: true, trim: true, index: true },
@@ -49,6 +58,7 @@ const TenderSchema = new Schema<ITenderDocument>(
     },
     estimatedValue: { type: Number, required: true, min: 0 },
     earnestMoneyDeposit: { type: Number, default: 0 },
+    sliceConfig: { type: SliceConfigSchema },
     submissionDeadline: { type: Date, required: true, index: true },
     openingDate: { type: Date },
     status: {
@@ -60,6 +70,11 @@ const TenderSchema = new Schema<ITenderDocument>(
     location: { type: String, required: true },
     state: { type: String },
     scopeOfWork: { type: String },
+    quotedAmount: { type: Number, min: 0 },
+    awardedTo: { type: String, trim: true },
+    awardedAmount: { type: Number, min: 0 },
+    awardSliceConfig: { type: SliceConfigSchema },
+    rejectionReason: { type: String },
     assignedManager: { type: Schema.Types.ObjectId, ref: 'User' },
     attachments: [TenderAttachmentSchema],
     comments: [TenderCommentSchema],

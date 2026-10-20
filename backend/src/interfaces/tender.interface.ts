@@ -26,6 +26,12 @@ export interface ITenderTimelineEvent {
   timestamp: Date;
 }
 
+export interface ISliceConfig {
+  enabled: boolean;
+  count: number;
+  amounts: number[];
+}
+
 export interface ITender {
   entity?: Types.ObjectId;
   tenderNumber: string;
@@ -34,13 +40,22 @@ export interface ITender {
   clientDepartment?: string;
   category: 'Logistics' | 'Mining' | 'Construction' | 'Transport' | 'Infrastructure' | 'Government Supplies' | 'Other';
   estimatedValue: number;
-  earnestMoneyDeposit?: number; // EMD
+  earnestMoneyDeposit?: number; // kept for historical records
+  sliceConfig?: ISliceConfig;
   submissionDeadline: Date;
   openingDate?: Date;
   status: TenderStatus;
   location: string;
   state?: string;
   scopeOfWork?: string;
+  // Submitted status
+  quotedAmount?: number;
+  // Awarded status
+  awardedTo?: string;
+  awardedAmount?: number;
+  awardSliceConfig?: ISliceConfig;
+  // Rejected status
+  rejectionReason?: string;
   assignedManager?: Types.ObjectId;
   attachments?: ITenderAttachment[];
   comments?: ITenderComment[];
