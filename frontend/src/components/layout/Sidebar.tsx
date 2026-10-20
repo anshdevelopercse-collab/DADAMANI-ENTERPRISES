@@ -21,6 +21,7 @@ import {
   BadgePercent,
   Building2,
   X,
+  CheckSquare,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -56,6 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle, mobileOpe
         { name: 'Fleet & Vehicles', href: '/vehicles', icon: Truck, permission: 'vehicle:read' },
         { name: 'Workforce', href: '/workforce', icon: HardHat, permission: 'workforce:read' },
         { name: 'Work Orders', href: '/work-orders', icon: ClipboardList, permission: 'work_order:read' },
+        { name: 'Tasks & Checklists', href: '/tasks', icon: CheckSquare, permission: 'task:read' },
       ],
     },
     {

@@ -115,7 +115,7 @@ export const uploadMiddleware = multer({
 // --- Audit Logger Helper ---
 export const logAudit = async (
   req: AuthenticatedRequest,
-  module: 'AUTH' | 'TENDERS' | 'AWARDED' | 'VEHICLES' | 'WORK_ORDERS' | 'USERS' | 'IMPORT' | 'EXPORT' | 'DOCUMENTS' | 'SETTINGS' | 'SYSTEM',
+  module: 'AUTH' | 'TENDERS' | 'AWARDED' | 'VEHICLES' | 'WORK_ORDERS' | 'USERS' | 'IMPORT' | 'EXPORT' | 'DOCUMENTS' | 'SETTINGS' | 'SYSTEM' | 'TASKS',
   action: string,
   description: string,
   entityId?: string,

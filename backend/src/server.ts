@@ -4,6 +4,7 @@ import { connectDatabase } from './config/database.js';
 import { ENV } from './config/env.config.js';
 import { logger } from './config/logger.config.js';
 import { initExpiryAlertCron } from './cron/expiry-alert.cron.js';
+import { initTaskReminderCron } from './cron/task-reminder.cron.js';
 import { initMailer } from './config/mailer.config.js';
 
 const startServer = async () => {
@@ -16,6 +17,7 @@ const startServer = async () => {
 
     // 3. Initialize Cron Jobs
     initExpiryAlertCron();
+    initTaskReminderCron();
 
     // 4. Create App and HTTP Server
     const app = createApp();

@@ -433,6 +433,41 @@ export interface Company {
   createdAt: string;
 }
 
+// --- Tasks & Checklists ---
+export interface TaskChecklistItem {
+  _id: string;
+  title: string;
+  isCompleted: boolean;
+  completedAt?: string;
+}
+
+export interface TaskReminder {
+  enabled: boolean;
+  minutesBefore: number;
+  dailyReminder: boolean;
+  deadlineReminderSent: boolean;
+  overdueNotified: boolean;
+  lastDailyReminderSentAt?: string;
+}
+
+export interface Task {
+  _id: string;
+  title: string;
+  description?: string;
+  priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+  status: 'Pending' | 'In Progress' | 'Completed';
+  dueDate: string;
+  checklistItems: TaskChecklistItem[];
+  reminder: TaskReminder;
+  createdBy: { _id: string; name: string; email: string; role: string } | string;
+  assignedTo?: { _id: string; name: string; email: string; role: string } | string;
+  assignedAt?: string;
+  completedAt?: string;
+  isPersonal: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GemFee {
   _id: string;
   entity?: string;

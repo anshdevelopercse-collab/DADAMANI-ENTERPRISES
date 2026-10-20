@@ -20,6 +20,7 @@ import { InvoiceListPage } from './pages/invoices/InvoiceListPage';
 import { ContractAdvanceListPage } from './pages/advances/ContractAdvanceListPage';
 import { GemFeeListPage } from './pages/gem-fees/GemFeeListPage';
 import { CompanyListPage } from './pages/companies/CompanyListPage';
+import { TasksPage } from './pages/tasks/TasksPage';
 import { NotFoundPage } from './pages/errors/NotFoundPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: string }> = ({
@@ -75,6 +76,7 @@ export const App: React.FC = () => {
             <Route path="contract-advances" element={<ContractAdvanceListPage />} />
             <Route path="gem-fees" element={<GemFeeListPage />} />
             <Route path="companies" element={<CompanyListPage />} />
+            <Route path="tasks" element={<TasksPage />} />
             <Route path="excel-import" element={<ExcelImportPage />} />
             <Route path="documents" element={<DocumentListPage />} />
             <Route path="reports" element={<ReportsPage />} />

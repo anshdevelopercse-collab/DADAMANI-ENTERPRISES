@@ -18,6 +18,7 @@ import { reportsRouter } from './reports.routes.js';
 import { workforceRouter } from './workforce.routes.js';
 import { invoiceRouter, advanceRouter, gemFeeRouter } from './finance.routes.js';
 import { companyRouter } from './company.routes.js';
+import { taskRouter } from './task.routes.js';
 
 const router = Router();
 
@@ -38,5 +39,6 @@ router.use('/invoices', invoiceRouter);
 router.use('/contract-advances', advanceRouter);
 router.use('/gem-fees', gemFeeRouter);
 router.use('/companies', companyRouter);
+router.use('/tasks', taskRouter);
 
 export default router;

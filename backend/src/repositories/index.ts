@@ -18,6 +18,8 @@ import { Notification } from '../models/notification.model.js';
 import { INotificationDocument } from '../interfaces/audit.interface.js';
 import { VehicleAllocation } from '../models/vehicle-allocation.model.js';
 import { IVehicleAllocationDocument } from '../interfaces/vehicle-allocation.interface.js';
+import { Task } from '../models/task.model.js';
+import { ITaskDocument } from '../interfaces/task.interface.js';
 
 export class UserRepository extends BaseRepository<IUserDocument> {
   constructor() {
@@ -118,5 +120,11 @@ export class SettingRepository extends BaseRepository<ISettingDocument> {
 export class VehicleAllocationRepository extends BaseRepository<IVehicleAllocationDocument> {
   constructor() {
     super(VehicleAllocation);
+  }
+}
+
+export class TaskRepository extends BaseRepository<ITaskDocument> {
+  constructor() {
+    super(Task);
   }
 }

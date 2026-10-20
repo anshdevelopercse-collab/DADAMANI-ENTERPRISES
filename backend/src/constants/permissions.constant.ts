@@ -83,6 +83,13 @@ export const PERMISSIONS = {
   // Companies / Entities (schema ready; module gated until entity data is approved)
   COMPANY_READ: 'company:read',
   COMPANY_MANAGE: 'company:manage',
+
+  // Tasks & Checklists
+  TASK_READ: 'task:read',
+  TASK_CREATE: 'task:create',
+  TASK_UPDATE: 'task:update',
+  TASK_DELETE: 'task:delete',
+  TASK_ASSIGN: 'task:assign',
 } as const;
 
 export type PermissionKey = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -127,6 +134,10 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.GEMFEE_READ,
     PERMISSIONS.GEMFEE_CREATE,
     PERMISSIONS.COMPANY_READ,
+    PERMISSIONS.TASK_READ,
+    PERMISSIONS.TASK_CREATE,
+    PERMISSIONS.TASK_UPDATE,
+    PERMISSIONS.TASK_DELETE,
   ],
   Viewer: [
     PERMISSIONS.TENDER_READ,

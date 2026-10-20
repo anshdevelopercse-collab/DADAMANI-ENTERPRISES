@@ -63,4 +63,21 @@ export enum NotificationType {
   WORK_ORDER_ASSIGNED = 'work_order_assigned',
   SYSTEM = 'system',
   IMPORT_COMPLETED = 'import_completed',
+  TASK_ASSIGNED = 'task_assigned',
+  TASK_COMPLETED = 'task_completed',
+  TASK_OVERDUE = 'task_overdue',
+  TASK_REMINDER = 'task_reminder',
+}
+
+export enum TaskStatus {
+  PENDING = 'Pending',
+  IN_PROGRESS = 'In Progress',
+  COMPLETED = 'Completed',
+}
+
+export enum TaskPriority {
+  LOW = 'Low',
+  MEDIUM = 'Medium',
+  HIGH = 'High',
+  URGENT = 'Urgent',
 }

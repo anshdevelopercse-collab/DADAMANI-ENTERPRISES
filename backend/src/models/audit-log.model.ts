@@ -46,7 +46,7 @@ const AuditLogSchema = new Schema<IAuditLogDocument>(
     action: { type: String, required: true, index: true },
     module: {
       type: String,
-      enum: ['AUTH', 'TENDERS', 'AWARDED', 'VEHICLES', 'WORK_ORDERS', 'USERS', 'IMPORT', 'EXPORT', 'DOCUMENTS', 'SETTINGS', 'SYSTEM'],
+      enum: ['AUTH', 'TENDERS', 'AWARDED', 'VEHICLES', 'WORK_ORDERS', 'USERS', 'IMPORT', 'EXPORT', 'DOCUMENTS', 'SETTINGS', 'SYSTEM', 'TASKS'],
       required: true,
       index: true,
     },
