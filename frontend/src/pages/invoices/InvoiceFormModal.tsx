@@ -49,6 +49,7 @@ export const InvoiceFormModal: React.FC<InvoiceFormModalProps> = ({ isOpen, onCl
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      fullScreen
       title="New Invoice"
       subtitle="A month-wise billing record tied to a contract"
       footer={

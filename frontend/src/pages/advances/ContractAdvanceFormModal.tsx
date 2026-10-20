@@ -70,6 +70,7 @@ export const ContractAdvanceFormModal: React.FC<Props> = ({ isOpen, onClose, onS
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      fullScreen
       title="Record Contract Advance"
       subtitle="Issue a pre-bill advance against a running contract"
       footer={

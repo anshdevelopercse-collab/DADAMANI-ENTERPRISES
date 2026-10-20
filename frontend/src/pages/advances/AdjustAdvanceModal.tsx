@@ -86,6 +86,7 @@ export const AdjustAdvanceModal: React.FC<Props> = ({ isOpen, advance, onClose, 
       <Modal
         isOpen={isOpen}
         onClose={onClose}
+        fullScreen
         title="Adjust Advance Against Invoice"
         subtitle={advance ? `Advance to ${advance.recipientName} — Remaining: ${fmt(remaining)}` : ''}
         footer={

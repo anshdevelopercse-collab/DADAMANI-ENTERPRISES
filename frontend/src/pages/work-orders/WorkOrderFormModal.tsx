@@ -117,245 +117,251 @@ export const WorkOrderFormModal: React.FC<WorkOrderFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div className="glass-panel w-full max-w-2xl rounded-2xl p-6 border border-slate-800 shadow-2xl relative my-8">
+    <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 animate-fade-in" style={{ height: '100dvh' }}>
+      <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-xl">
+        <div>
+          <h2 className="text-lg font-bold text-white">
+            {orderToEdit ? 'Edit Work Order' : 'Create & Assign New Work Order'}
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Allocate managers, fleet units, project sites, and target deliverables
+          </p>
+        </div>
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
         >
           <X className="w-5 h-5" />
         </button>
+      </div>
 
-        <h2 className="text-lg font-bold text-white mb-1">
-          {orderToEdit ? 'Edit Work Order' : 'Create & Assign New Work Order'}
-        </h2>
-        <p className="text-xs text-slate-400 mb-6">
-          Allocate managers, fleet units, project sites, and target deliverables
-        </p>
-
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <FirmSelect
-            id="wo-firm"
-            label="Contract firm"
-            value={firm}
-            onChange={(next) => { setFirm(next); setFormData((f) => ({ ...f, relatedTender: '' })); }}
-            hint={orderToEdit && !firmIdOf(orderToEdit.entity ?? orderToEdit.firm)
-              ? 'This contract predates firm tracking. Selecting a firm assigns it permanently.'
-              : undefined}
-          />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Order Number *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.orderNumber}
-                onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none font-mono"
-              />
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
+              {error}
             </div>
+          )}
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Priority
-              </label>
-              <select
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Emergency">Emergency</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-              Work Order Title *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              placeholder="e.g. Daily Coal Dispatch Shift Operations - Siding 4"
+          <form id="workorder-form" onSubmit={handleSubmit} className="space-y-4">
+            <FirmSelect
+              id="wo-firm"
+              label="Contract firm"
+              value={firm}
+              onChange={(next) => { setFirm(next); setFormData((f) => ({ ...f, relatedTender: '' })); }}
+              hint={orderToEdit && !firmIdOf(orderToEdit.entity ?? orderToEdit.firm)
+                ? 'This contract predates firm tracking. Selecting a firm assigns it permanently.'
+                : undefined}
             />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Order Number *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.orderNumber}
+                  onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none font-mono"
+                />
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Priority
+                </label>
+                <select
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Emergency">Emergency</option>
+                </select>
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Client Organization *
+                Work Order Title *
               </label>
               <input
                 type="text"
                 required
-                value={formData.clientName}
-                onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-                placeholder="e.g. Mahanadi Coalfields Ltd"
+                placeholder="e.g. Daily Coal Dispatch Shift Operations - Siding 4"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Linked Tender Proposal
-              </label>
-              <select
-                value={formData.relatedTender}
-                onChange={(e) => setFormData({ ...formData, relatedTender: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              >
-                <option value="">-- No Direct Tender Link --</option>
-                {tenders.map((t) => (
-                  <option key={t._id} value={t._id}>
-                    {t.tenderNumber} - {t.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Client Organization *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.clientName}
+                  onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                  placeholder="e.g. Mahanadi Coalfields Ltd"
+                />
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Assigned Project *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.assignedProject}
-                onChange={(e) => setFormData({ ...formData, assignedProject: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-                placeholder="e.g. Talcher Coal Haulage 2026"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Site Location *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.siteLocation}
-                onChange={(e) => setFormData({ ...formData, siteLocation: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-                placeholder="e.g. Hingula OCP Weighbridge 2"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Lead Manager *
-              </label>
-              <select
-                required
-                value={formData.assignedManager}
-                onChange={(e) => setFormData({ ...formData, assignedManager: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              >
-                <option value="">-- Choose Manager --</option>
-                {managers.map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {m.name} ({m.email})
-                  </option>
-                ))}
-              </select>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Linked Tender Proposal
+                </label>
+                <select
+                  value={formData.relatedTender}
+                  onChange={(e) => setFormData({ ...formData, relatedTender: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                >
+                  <option value="">-- No Direct Tender Link --</option>
+                  {tenders.map((t) => (
+                    <option key={t._id} value={t._id}>
+                      {t.tenderNumber} - {t.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Contract Value (₹) *
-              </label>
-              <input
-                type="number"
-                required
-                min={0}
-                value={formData.contractValue}
-                onChange={(e) => setFormData({ ...formData, contractValue: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Assigned Project *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.assignedProject}
+                  onChange={(e) => setFormData({ ...formData, assignedProject: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                  placeholder="e.g. Talcher Coal Haulage 2026"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Site Location *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.siteLocation}
+                  onChange={(e) => setFormData({ ...formData, siteLocation: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                  placeholder="e.g. Hingula OCP Weighbridge 2"
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Status
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              >
-                <option value="Draft">Draft</option>
-                <option value="Assigned">Assigned</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Invoiced">Invoiced</option>
-              </select>
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Lead Manager *
+                </label>
+                <select
+                  required
+                  value={formData.assignedManager}
+                  onChange={(e) => setFormData({ ...formData, assignedManager: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                >
+                  <option value="">-- Choose Manager --</option>
+                  {managers.map((m) => (
+                    <option key={m._id} value={m._id}>
+                      {m.name} ({m.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Start Date *
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200"
-              />
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Contract Value (₹) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  value={formData.contractValue}
+                  onChange={(e) => setFormData({ ...formData, contractValue: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Status
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                >
+                  <option value="Draft">Draft</option>
+                  <option value="Assigned">Assigned</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Invoiced">Invoiced</option>
+                </select>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Target Completion Date *
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.targetEndDate}
-                onChange={(e) => setFormData({ ...formData, targetEndDate: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200"
-              />
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Start Date *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200"
+                />
+              </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-sky-600/30 flex items-center gap-2 disabled:opacity-50"
-            >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>{orderToEdit ? 'Save Changes' : 'Issue Work Order'}</span>
-            </button>
-          </div>
-        </form>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Target Completion Date *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.targetEndDate}
+                  onChange={(e) => setFormData({ ...formData, targetEndDate: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200"
+                />
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div className="shrink-0 px-6 py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          form="workorder-form"
+          type="submit"
+          disabled={loading}
+          className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-sky-600/30 flex items-center gap-2 disabled:opacity-50"
+        >
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+          <span>{orderToEdit ? 'Save Changes' : 'Issue Work Order'}</span>
+        </button>
       </div>
     </div>
   );

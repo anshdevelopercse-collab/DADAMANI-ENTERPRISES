@@ -88,6 +88,7 @@ export const WorkforceFormModal: React.FC<WorkforceFormModalProps> = ({ isOpen, 
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      fullScreen
       title={isEdit ? 'Edit Workforce Member' : 'Add Workforce Member'}
       subtitle="Driver, Operator, Mechanic, Supervisor or Other operational personnel"
       footer={

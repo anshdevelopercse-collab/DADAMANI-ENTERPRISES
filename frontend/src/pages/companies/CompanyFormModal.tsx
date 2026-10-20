@@ -86,6 +86,7 @@ export const CompanyFormModal: React.FC<Props> = ({ isOpen, onClose, onSaved, co
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      fullScreen
       title={isEdit ? 'Edit Legal Entity' : 'Register Legal Entity'}
       subtitle="Company / entity details — these are the legal entities that own contracts"
       footer={

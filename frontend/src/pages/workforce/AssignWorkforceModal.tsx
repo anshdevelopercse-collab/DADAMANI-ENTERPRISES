@@ -47,9 +47,9 @@ export const AssignWorkforceModal: React.FC<AssignWorkforceModalProps> = ({ isOp
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      fullScreen
       title={`Assign ${workforce?.name || ''}`}
       subtitle="Reassigning ends the current active assignment and preserves it in history."
-      size="sm"
       footer={
         <>
           <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 border border-slate-700 transition">

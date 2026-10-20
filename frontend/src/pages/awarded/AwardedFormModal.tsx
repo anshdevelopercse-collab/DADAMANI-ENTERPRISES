@@ -120,193 +120,199 @@ export const AwardedFormModal: React.FC<AwardedFormModalProps> = ({
   const margin = val > 0 ? ((profit / val) * 100).toFixed(1) : '0';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
-      <div className="glass-panel w-full max-w-2xl rounded-2xl p-6 border border-slate-800 shadow-2xl relative my-8">
+    <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 animate-fade-in" style={{ height: '100dvh' }}>
+      <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-xl">
+        <div>
+          <h2 className="text-lg font-bold text-white">
+            {awardedToEdit ? 'Edit Awarded Contract' : 'Record New Awarded Tender'}
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Track execution status, profit margins, and vendor partner allocations
+          </p>
+        </div>
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
         >
           <X className="w-5 h-5" />
         </button>
+      </div>
 
-        <h2 className="text-lg font-bold text-white mb-1">
-          {awardedToEdit ? 'Edit Awarded Contract' : 'Record New Awarded Tender'}
-        </h2>
-        <p className="text-xs text-slate-400 mb-6">
-          Track execution status, profit margins, and vendor partner allocations
-        </p>
-
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!awardedToEdit && (
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Select Base Tender Proposal *
-              </label>
-              <select
-                required
-                value={formData.tender}
-                onChange={(e) => handleTenderSelect(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              >
-                <option value="">-- Choose from tender registry --</option>
-                {tenders.map((t) => (
-                  <option key={t._id} value={t._id}>
-                    {t.tenderNumber} - {t.title} ({t.clientName})
-                  </option>
-                ))}
-              </select>
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">
+              {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form id="awarded-form" onSubmit={handleSubmit} className="space-y-4">
+            {!awardedToEdit && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Select Base Tender Proposal *
+                </label>
+                <select
+                  required
+                  value={formData.tender}
+                  onChange={(e) => handleTenderSelect(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                >
+                  <option value="">-- Choose from tender registry --</option>
+                  {tenders.map((t) => (
+                    <option key={t._id} value={t._id}>
+                      {t.tenderNumber} - {t.title} ({t.clientName})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Formal Contract Number *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.contractNumber}
+                  onChange={(e) => setFormData({ ...formData, contractNumber: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Execution Status
+                </label>
+                <select
+                  value={formData.executionStatus}
+                  onChange={(e) => setFormData({ ...formData, executionStatus: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                >
+                  <option value="Pending Kickoff">Pending Kickoff</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="On Track">On Track</option>
+                  <option value="Delayed">Delayed</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Final Award Value (₹) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  value={formData.awardValue}
+                  onChange={(e) => setFormData({ ...formData, awardValue: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Estimated Cost (₹) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min={0}
+                  value={formData.estimatedCost}
+                  onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Projected Margin
+                </label>
+                <div className="px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-mono font-bold text-emerald-400">
+                  ₹{(profit / 100000).toFixed(2)} L ({margin}%)
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Awarded Date *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.awardedDate}
+                  onChange={(e) => setFormData({ ...formData, awardedDate: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Work Start Date *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                  Completion Deadline *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formData.completionDeadline}
+                  onChange={(e) => setFormData({ ...formData, completionDeadline: e.target.value })}
+                  className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Formal Contract Number *
+                Vendor / Subcontractor Partners (comma separated)
               </label>
               <input
                 type="text"
-                required
-                value={formData.contractNumber}
-                onChange={(e) => setFormData({ ...formData, contractNumber: e.target.value })}
+                value={formData.vendorPartners}
+                onChange={(e) => setFormData({ ...formData, vendorPartners: e.target.value })}
+                placeholder="e.g. Utkal Fleet Logistics, Kalinga Earthmovers"
                 className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
               />
             </div>
+          </form>
+        </div>
+      </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Execution Status
-              </label>
-              <select
-                value={formData.executionStatus}
-                onChange={(e) => setFormData({ ...formData, executionStatus: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              >
-                <option value="Pending Kickoff">Pending Kickoff</option>
-                <option value="In Progress">In Progress</option>
-                <option value="On Track">On Track</option>
-                <option value="Delayed">Delayed</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Final Award Value (₹) *
-              </label>
-              <input
-                type="number"
-                required
-                min={0}
-                value={formData.awardValue}
-                onChange={(e) => setFormData({ ...formData, awardValue: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Estimated Cost (₹) *
-              </label>
-              <input
-                type="number"
-                required
-                min={0}
-                value={formData.estimatedCost}
-                onChange={(e) => setFormData({ ...formData, estimatedCost: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Projected Margin
-              </label>
-              <div className="px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs font-mono font-bold text-emerald-400">
-                ₹{(profit / 100000).toFixed(2)} L ({margin}%)
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Awarded Date *
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.awardedDate}
-                onChange={(e) => setFormData({ ...formData, awardedDate: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Work Start Date *
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Completion Deadline *
-              </label>
-              <input
-                type="date"
-                required
-                value={formData.completionDeadline}
-                onChange={(e) => setFormData({ ...formData, completionDeadline: e.target.value })}
-                className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-              Vendor / Subcontractor Partners (comma separated)
-            </label>
-            <input
-              type="text"
-              value={formData.vendorPartners}
-              onChange={(e) => setFormData({ ...formData, vendorPartners: e.target.value })}
-              placeholder="e.g. Utkal Fleet Logistics, Kalinga Earthmovers"
-              className="w-full px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-emerald-600/30 flex items-center gap-2 disabled:opacity-50"
-            >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>{awardedToEdit ? 'Save Changes' : 'Record Contract'}</span>
-            </button>
-          </div>
-        </form>
+      <div className="shrink-0 px-6 py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          form="awarded-form"
+          type="submit"
+          disabled={loading}
+          className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-emerald-600/30 flex items-center gap-2 disabled:opacity-50"
+        >
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+          <span>{awardedToEdit ? 'Save Changes' : 'Record Contract'}</span>
+        </button>
       </div>
     </div>
   );

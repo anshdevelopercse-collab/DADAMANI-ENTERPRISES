@@ -75,6 +75,7 @@ export const GemFeeFormModal: React.FC<Props> = ({ isOpen, onClose, onSaved }) =
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      fullScreen
       title="Record GEM Portal Fee"
       subtitle="Fee paid after winning a tender on the Government e-Marketplace"
       footer={
