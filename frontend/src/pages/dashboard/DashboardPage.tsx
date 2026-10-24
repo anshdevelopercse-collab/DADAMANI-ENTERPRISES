@@ -7,8 +7,6 @@ import {
   AlertTriangle,
   Clock,
   ShieldAlert,
-  Plus,
-  Upload,
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { StatCard } from '../../components/common/StatCard';
@@ -74,22 +72,6 @@ export const DashboardPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 relative z-10 flex-wrap">
-          <Link
-            to="/excel-import"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition"
-          >
-            <Upload className="w-4 h-4 text-emerald-400" />
-            <span>Excel Import Wizard</span>
-          </Link>
-          <Link
-            to="/tenders"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-lg shadow-sky-600/30 transition"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Tender Bid</span>
-          </Link>
-        </div>
       </div>
 
       {/* Compliance Expiry Urgent Banner */}

@@ -205,12 +205,11 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-50 flex flex-col bg-slate-950 animate-fade-in"
-        style={{ height: '100dvh' }}
-      >
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center p-0 sm:p-4 sm:pt-10 overflow-y-auto">
+        <div className="relative w-full sm:max-w-3xl sm:rounded-2xl bg-slate-950 flex flex-col min-h-screen sm:min-h-0 sm:max-h-[88vh] shadow-2xl animate-fade-in">
         {/* Header */}
-        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-xl">
+        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-800 bg-slate-900/80 backdrop-blur-xl sm:rounded-t-2xl">
           <div>
             <h2 className="text-lg font-bold text-white">
               {tenderToEdit ? 'Edit Tender Proposal' : 'Create New Tender Submission'}
@@ -588,7 +587,7 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 px-6 py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl flex items-center justify-end gap-3">
+        <div className="shrink-0 px-6 py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl flex items-center justify-end gap-3 sm:rounded-b-2xl">
           <button
             type="button"
             onClick={onClose}
@@ -605,6 +604,7 @@ export const TenderFormModal: React.FC<TenderFormModalProps> = ({
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             <span>{tenderToEdit ? 'Save Changes' : 'Submit Tender Bid'}</span>
           </button>
+        </div>
         </div>
       </div>
 
